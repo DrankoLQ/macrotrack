@@ -47,6 +47,7 @@ export interface OffSearchResult {
 	fat: number;
 	fiber: number;
 	hasNutriments: boolean;
+	source: 'off';
 }
 
 const SEARCH_HOSTS = ['https://es.openfoodfacts.org', 'https://world.openfoodfacts.org'];
@@ -82,7 +83,8 @@ function toSearchResult(product: Record<string, unknown>): OffSearchResult | nul
 		carbs,
 		fat,
 		fiber,
-		hasNutriments: kcal > 0 || protein > 0 || carbs > 0 || fat > 0 || fiber > 0
+		hasNutriments: kcal > 0 || protein > 0 || carbs > 0 || fat > 0 || fiber > 0,
+		source: 'off' as const
 	};
 }
 
