@@ -45,7 +45,10 @@
 			{#each results as food (food.id)}
 				<li>
 					<button class="row-btn" onclick={() => pick(food)}>
-						<span>{food.name}</span>
+						<span>
+							{food.name}
+							{#if food.brand}<small class="muted"> · {food.brand}</small>{/if}
+						</span>
 						<small>{fmt(food.kcal)} kcal / {food.base}g</small>
 					</button>
 				</li>
@@ -55,7 +58,10 @@
 	{#if selected}
 		<div class="card selected-card">
 			<div class="row sel-head">
-				<strong>{selected.name}</strong>
+				<strong>
+					{selected.name}
+					{#if selected.brand}<small class="muted"> · {selected.brand}</small>{/if}
+				</strong>
 				<small class="muted">{fmt(selected.kcal)} kcal / {selected.base}g</small>
 			</div>
 			<div class="row">

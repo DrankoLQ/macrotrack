@@ -18,6 +18,7 @@
 	let errorMsg = $state('');
 	let added = $state<string | null>(null);
 	let manualCode = $state('');
+	let editedName = $state('');
 	let manualName = $state('');
 	const manual = $state({ kcal: '', protein: '', carbs: '', fat: '', fiber: '' });
 
@@ -101,6 +102,7 @@
 		}
 		offProduct = await fetchProductByBarcode(value);
 		if (offProduct) {
+			editedName = offProduct.name;
 			status = 'found';
 			return;
 		}
@@ -121,7 +123,8 @@
 
 	async function addFromOff() {
 		if (!offProduct) return;
-		const food = offToFood(offProduct, code);
+		const name = editedName.trim() || offProduct.name;
+		const food = offToFood({ ...offProduct, name }, code);
 		await saveFood(food);
 		resetResult();
 	}
@@ -155,6 +158,7 @@
 	function resetResult() {
 		localFood = null;
 		offProduct = null;
+		editedName = '';
 		status = 'idle';
 	}
 </script>
@@ -195,7 +199,11 @@
 
 {#if display}
 	<section class="card">
-		<h2>{display.name}</h2>
+		{#if offProduct}
+			<label>Nombre (editable)<input bind:value={editedName} /></label>
+		{:else}
+			<h2>{display.name}</h2>
+		{/if}
 		{#if display.brand}<p class="muted">{display.brand}</p>{/if}
 		{#if display.imageUrl}
 			<img class="thumb" src={display.imageUrl} alt="" />

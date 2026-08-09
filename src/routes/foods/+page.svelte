@@ -230,7 +230,10 @@
 			{#each filtered as food (food.id)}
 				<li class="food">
 					<div class="food-info">
-						<strong>{food.name}</strong>
+						<strong>
+							{food.name}
+							{#if food.brand}<small class="muted"> · {food.brand}</small>{/if}
+						</strong>
 						<small class="muted">
 							{#if food.barcode}<span>{food.barcode} · </span>{/if}
 							{fmt(food.kcal)} kcal · P {fmt(food.protein)} · C {fmt(food.carbs)} · G {fmt(food.fat)} · F {fmt(food.fiber)} / {food.base}g · {food.source}
