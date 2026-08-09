@@ -87,18 +87,16 @@ function toSearchResult(product: Record<string, unknown>): OffSearchResult | nul
 }
 
 export async function searchProducts(query: string): Promise<OffSearchResult[]> {
+	const attempts = [...SEARCH_HOSTS, ...SEARCH_HOSTS];
 	let lastError = '';
-	for (const host of SEARCH_HOSTS) {
+	for (const host of attempts) {
 		try {
 			const res = await fetch(searchUrl(host, query), {
 				headers: { 'X-User-Agent': 'macrotrack (pet project personal)' }
 			});
-			if (!res.ok) {
-				const hint = res.status === 429 || res.status === 503 ? ' (límite de peticiones, espera un minuto)' : '';
-				throw new Error(`OpenFoodFacts respondió ${res.status}${hint}`);
-			}
+			if (!res.ok) throw new Error(`HTTP ${res.status}`);
 			const data = await res.json();
-			if (!Array.isArray(data.products)) throw new Error('Respuesta inesperada');
+			if (!Array.isArray(data.products)) throw new Error('respuesta inesperada');
 			return data.products
 				.map((product: unknown) => toSearchResult(product as Record<string, unknown>))
 				.filter((product: OffSearchResult | null): product is OffSearchResult => product !== null);
@@ -106,7 +104,7 @@ export async function searchProducts(query: string): Promise<OffSearchResult[]> 
 			lastError = error instanceof Error ? error.message : 'Error de red';
 		}
 	}
-	throw new Error(`No se pudo buscar en OpenFoodFacts: ${lastError}`);
+	throw new Error(`No se pudo buscar en OpenFoodFacts (${lastError}). Inténtalo de nuevo en un momento.`);
 }
 
 export function offToFood(product: OffProduct, barcode: string): Omit<Food, 'id'> {
