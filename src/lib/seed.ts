@@ -2,6 +2,11 @@ import { db, type Food } from './db';
 
 export const SEED_FOODS: Omit<Food, 'id' | 'createdAt'>[] = [
 	{ name: 'Fresas', base: 100, kcal: 32, protein: 0.7, carbs: 7.7, fat: 0.3, fiber: 2, source: 'builtin' },
+	{ name: 'Uva blanca', base: 100, kcal: 69, protein: 0.7, carbs: 18.1, fat: 0.2, fiber: 0.9, source: 'builtin' },
+	{ name: 'Kiwi amarillo', base: 100, kcal: 63, protein: 1.1, carbs: 15.8, fat: 0.5, fiber: 1.4, source: 'builtin' },
+	{ name: 'Higo', base: 100, kcal: 74, protein: 0.8, carbs: 19.2, fat: 0.3, fiber: 2.9, source: 'builtin' },
+	{ name: 'Sandía', base: 100, kcal: 30, protein: 0.6, carbs: 7.6, fat: 0.2, fiber: 0.4, source: 'builtin' },
+	{ name: 'Melón', base: 100, kcal: 34, protein: 0.8, carbs: 8.2, fat: 0.2, fiber: 0.9, source: 'builtin' },
 	{ name: 'Tomate', base: 100, kcal: 18, protein: 0.9, carbs: 3.9, fat: 0.2, fiber: 1.2, source: 'builtin' },
 	{ name: 'Plátano', base: 100, kcal: 89, protein: 1.1, carbs: 22.8, fat: 0.3, fiber: 2.6, source: 'builtin' },
 	{ name: 'Manzana', base: 100, kcal: 52, protein: 0.3, carbs: 13.8, fat: 0.2, fiber: 2.4, source: 'builtin' },
