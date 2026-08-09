@@ -109,16 +109,12 @@
 		Object.assign(manual, { kcal: '', protein: '', carbs: '', fat: '', fiber: '' });
 	}
 
-	async function saveFood(food: Omit<Food, 'id'>, andLog: boolean) {
-		let id: number | undefined;
+	async function saveFood(food: Omit<Food, 'id'>) {
 		try {
-			id = await db.foods.add(food);
+			await db.foods.add(food);
 		} catch {
 			const existing = await db.foods.where('barcode').equals(code).first();
-			id = existing?.id;
-		}
-		if (andLog && id !== undefined) {
-			await diary.addFood({ ...food, id }, grams);
+			if (!existing) throw new Error('No se pudo guardar el producto');
 		}
 		added = food.name;
 	}
@@ -126,7 +122,7 @@
 	async function addFromOff() {
 		if (!offProduct) return;
 		const food = offToFood(offProduct, code);
-		await saveFood(food, true);
+		await saveFood(food);
 		resetResult();
 	}
 
@@ -141,21 +137,18 @@
 		const name = manualName.trim();
 		if (!name) return;
 		const toNumber = (value: string) => parseFloat(value) || 0;
-		await saveFood(
-			{
-				name,
-				barcode: code,
-				base: 100,
-				kcal: toNumber(manual.kcal),
-				protein: toNumber(manual.protein),
-				carbs: toNumber(manual.carbs),
-				fat: toNumber(manual.fat),
-				fiber: toNumber(manual.fiber),
-				source: 'manual',
-				createdAt: Date.now()
-			},
-			true
-		);
+		await saveFood({
+			name,
+			barcode: code,
+			base: 100,
+			kcal: toNumber(manual.kcal),
+			protein: toNumber(manual.protein),
+			carbs: toNumber(manual.carbs),
+			fat: toNumber(manual.fat),
+			fiber: toNumber(manual.fiber),
+			source: 'manual',
+			createdAt: Date.now()
+		});
 		resetResult();
 	}
 
@@ -195,7 +188,7 @@
 
 {#if added}
 	<section class="card">
-		<p class="added">«{added}» añadido ✓ <a href="/">Ver diario</a></p>
+		<p class="added">«{added}» guardado en tu base de datos ✓ <a href="/">Ir al diario</a></p>
 		<button class="secondary" onclick={() => (added = null)}>Escanear otro</button>
 	</section>
 {/if}
@@ -215,7 +208,7 @@
 			{#if localFood}
 				<button onclick={addFromLocal}>Añadir al diario</button>
 			{:else}
-				<button onclick={addFromOff}>Guardar y añadir</button>
+				<button onclick={addFromOff}>Guardar en base de datos</button>
 			{/if}
 		</div>
 		<button class="secondary" onclick={resetResult}>Cancelar</button>
@@ -235,7 +228,7 @@
 				<label>Grasas / 100g<input type="number" bind:value={manual.fat} /></label>
 				<label>Fibra / 100g<input type="number" bind:value={manual.fiber} /></label>
 			</div>
-			<button onclick={addManual} disabled={!manualName.trim()}>Guardar y añadir al diario</button>
+			<button onclick={addManual} disabled={!manualName.trim()}>Guardar en base de datos</button>
 		</div>
 	</section>
 {/if}

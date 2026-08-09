@@ -3,13 +3,13 @@
 	import { page } from '$app/state';
 	import favicon from '$lib/assets/favicon.svg';
 	import '../app.css';
-	import { seedIfEmpty } from '$lib/seed';
+	import { seedIfNeeded } from '$lib/seed';
 	import { loadGoals } from '$lib/stores.svelte';
 
 	let { children } = $props();
 
 	onMount(() => {
-		seedIfEmpty();
+		seedIfNeeded();
 		loadGoals();
 		if ('serviceWorker' in navigator) {
 			navigator.serviceWorker.register('/service-worker.js');

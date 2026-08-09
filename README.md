@@ -23,12 +23,12 @@ npm run preview  # probar el build localmente
 
 ```
 src/lib/db.ts                 # esquema Dexie: foods + entries
-src/lib/seed.ts               # catálogo inicial embebido (19 alimentos comunes)
-src/lib/openfoodfacts.ts      # cliente de la API pública
+src/lib/seed.ts               # catálogo embebido (23 alimentos comunes; se añaden sin duplicar)
+src/lib/openfoodfacts.ts      # cliente de la API pública (producto por código + búsqueda por nombre)
 src/lib/stores.svelte.ts      # estado con runes: diario + objetivos
 src/lib/components/           # MacroBar, FoodPicker
 src/routes/+page.svelte       # diario: totales vs objetivos, añadir comida
-src/routes/foods/+page.svelte # base de datos de alimentos (CRUD)
+src/routes/foods/+page.svelte # base de datos de alimentos (CRUD + búsqueda por nombre en OpenFoodFacts)
 src/routes/scan/+page.svelte  # escáner + OpenFoodFacts + fallback manual
 src/service-worker.ts         # precache del app shell + network-first
 scripts/gen-icons.mjs         # regenera los iconos PNG

@@ -2,11 +2,18 @@
 	import { onMount } from 'svelte';
 	import { db, type Food } from '$lib/db';
 	import { fmt } from '$lib/format';
+	import { searchProducts, type OffSearchResult } from '$lib/openfoodfacts';
 
 	let foods: Food[] = $state([]);
 	let query = $state('');
 	let showForm = $state(false);
 	let saved = $state<string | null>(null);
+	let searchOff = $state(false);
+	let offQuery = $state('');
+	let offLoading = $state(false);
+	let offError = $state('');
+	let offResults = $state<OffSearchResult[]>([]);
+	let savedOff = $state<Set<number>>(new Set());
 	const form = $state({
 		name: '',
 		brand: '',
@@ -25,6 +32,10 @@
 			(food) => food.name.toLowerCase().includes(q) || (food.barcode ?? '').includes(q)
 		);
 	});
+
+	const existingBarcodes = $derived(
+		new Set(foods.map((food) => food.barcode).filter((barcode): barcode is string => Boolean(barcode)))
+	);
 
 	onMount(async () => {
 		foods = await db.foods.orderBy('name').toArray();
@@ -62,6 +73,43 @@
 		saved = name;
 		await refresh();
 	}
+
+	async function search() {
+		const q = offQuery.trim();
+		if (!q) return;
+		offLoading = true;
+		offError = '';
+		offResults = [];
+		try {
+			offResults = await searchProducts(q);
+		} catch (error) {
+			offError = error instanceof Error ? error.message : 'Error buscando en OpenFoodFacts';
+		} finally {
+			offLoading = false;
+		}
+	}
+
+	async function saveOffResult(result: OffSearchResult, index: number) {
+		try {
+			await db.foods.add({
+				name: result.name,
+				brand: result.brand,
+				barcode: result.barcode,
+				base: 100,
+				kcal: result.kcal,
+				protein: result.protein,
+				carbs: result.carbs,
+				fat: result.fat,
+				fiber: result.fiber,
+				source: 'openfoodfacts',
+				createdAt: Date.now()
+			});
+			savedOff = new Set([...savedOff, index]);
+			await refresh();
+		} catch {
+			offError = 'Ese producto ya está en tu base de datos';
+		}
+	}
 </script>
 
 <section class="card">
@@ -88,6 +136,49 @@
 				<label>Fibra / 100g<input type="number" bind:value={form.fiber} /></label>
 			</div>
 			<button onclick={add}>Guardar</button>
+		</div>
+	{/if}
+	<button class="secondary" onclick={() => (searchOff = !searchOff)}>
+		{searchOff ? 'Cerrar búsqueda' : 'Buscar alimentos por nombre (OpenFoodFacts)'}
+	</button>
+	{#if searchOff}
+		<div class="form">
+			<div class="row">
+				<input bind:value={offQuery} placeholder="Ej: miel, patata, garbanzos…" />
+				<button onclick={search} disabled={offLoading || !offQuery.trim()}>
+					{offLoading ? 'Buscando…' : 'Buscar'}
+				</button>
+			</div>
+			{#if offError}<p class="error">{offError}</p>{/if}
+			{#if offResults.length > 0}
+				<ul>
+					{#each offResults as result, i (result.barcode ?? result.name + i)}
+						<li class="food">
+							<div class="food-info">
+								<strong>{result.name}</strong>
+								<small class="muted">
+									{#if result.brand}<span>{result.brand} · </span>{/if}
+									{#if result.barcode}<span>{result.barcode} · </span>{/if}
+									{#if result.hasNutriments}
+										{fmt(result.kcal)} kcal · P {fmt(result.protein)} · C {fmt(result.carbs)} · G {fmt(result.fat)} · F {fmt(result.fiber)} / 100g
+									{:else}
+										sin datos nutricionales
+									{/if}
+								</small>
+							</div>
+							{#if result.barcode && existingBarcodes.has(result.barcode)}
+								<button class="secondary" disabled>En BD</button>
+							{:else if savedOff.has(i)}
+								<button class="secondary" disabled>Guardado ✓</button>
+							{:else}
+								<button onclick={() => saveOffResult(result, i)}>Guardar</button>
+							{/if}
+						</li>
+					{/each}
+				</ul>
+			{:else if !offLoading}
+				<p class="muted">Busca por nombre (ej: «miel», «patata») y guarda los que quieras en tu base de datos.</p>
+			{/if}
 		</div>
 	{/if}
 	{#if filtered.length === 0}
