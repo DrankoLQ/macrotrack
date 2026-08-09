@@ -119,7 +119,7 @@
 		usdaKeyInput = '';
 	}
 
-	async function saveOffResult(result: OffSearchResult, index: number) {
+	async function saveOffResult(result: SearchResult, index: number) {
 		try {
 			await db.foods.add({
 				name: result.name,
