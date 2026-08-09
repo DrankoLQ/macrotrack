@@ -49,7 +49,9 @@ export interface OffSearchResult {
 	hasNutriments: boolean;
 }
 
-export async function searchProducts(query: string): Promise<OffSearchResult[]> {
+const SEARCH_HOSTS = ['https://es.openfoodfacts.org', 'https://world.openfoodfacts.org'];
+
+function searchUrl(host: string, query: string): string {
 	const params = new URLSearchParams({
 		search_terms: query,
 		search_simple: '1',
@@ -58,39 +60,53 @@ export async function searchProducts(query: string): Promise<OffSearchResult[]> 
 		page_size: '10',
 		fields: 'code,product_name,brands,nutriments,image_front_small_url'
 	});
-	const res = await fetch(`https://world.openfoodfacts.org/cgi/search.pl?${params}`, {
-		headers: { 'X-User-Agent': 'macrotrack (pet project personal)' }
-	});
-	if (!res.ok) {
-		const hint = res.status === 429 || res.status === 503 ? ' (límite de peticiones, espera un minuto)' : '';
-		throw new Error(`OpenFoodFacts respondió ${res.status}${hint}`);
+	return `${host}/cgi/search.pl?${params}`;
+}
+
+function toSearchResult(product: Record<string, unknown>): OffSearchResult | null {
+	const nutriments = (product.nutriments ?? {}) as Record<string, unknown>;
+	const name = String(product.product_name ?? '').trim();
+	if (!name) return null;
+	const kcal = toNumber(nutriments['energy-kcal_100g']);
+	const protein = toNumber(nutriments.proteins_100g);
+	const carbs = toNumber(nutriments.carbohydrates_100g);
+	const fat = toNumber(nutriments.fat_100g);
+	const fiber = toNumber(nutriments.fiber_100g);
+	return {
+		barcode: product.code ? String(product.code) : undefined,
+		name,
+		brand: product.brands ? String(product.brands) : undefined,
+		imageUrl: product.image_front_small_url ? String(product.image_front_small_url) : undefined,
+		kcal,
+		protein,
+		carbs,
+		fat,
+		fiber,
+		hasNutriments: kcal > 0 || protein > 0 || carbs > 0 || fat > 0 || fiber > 0
+	};
+}
+
+export async function searchProducts(query: string): Promise<OffSearchResult[]> {
+	let lastError = '';
+	for (const host of SEARCH_HOSTS) {
+		try {
+			const res = await fetch(searchUrl(host, query), {
+				headers: { 'X-User-Agent': 'macrotrack (pet project personal)' }
+			});
+			if (!res.ok) {
+				const hint = res.status === 429 || res.status === 503 ? ' (límite de peticiones, espera un minuto)' : '';
+				throw new Error(`OpenFoodFacts respondió ${res.status}${hint}`);
+			}
+			const data = await res.json();
+			if (!Array.isArray(data.products)) throw new Error('Respuesta inesperada');
+			return data.products
+				.map((product: unknown) => toSearchResult(product as Record<string, unknown>))
+				.filter((product): product is OffSearchResult => product !== null);
+		} catch (error) {
+			lastError = error instanceof Error ? error.message : 'Error de red';
+		}
 	}
-	const data = await res.json();
-	if (!Array.isArray(data.products)) return [];
-	return data.products
-		.map((product: Record<string, unknown>) => {
-			const nutriments = (product.nutriments ?? {}) as Record<string, unknown>;
-			const name = String(product.product_name ?? '').trim();
-			if (!name) return null;
-			return {
-				barcode: product.code ? String(product.code) : undefined,
-				name,
-				brand: product.brands ? String(product.brands) : undefined,
-				imageUrl: product.image_front_small_url ? String(product.image_front_small_url) : undefined,
-				kcal: toNumber(nutriments['energy-kcal_100g']),
-				protein: toNumber(nutriments.proteins_100g),
-				carbs: toNumber(nutriments.carbohydrates_100g),
-				fat: toNumber(nutriments.fat_100g),
-				fiber: toNumber(nutriments.fiber_100g),
-				hasNutriments:
-					toNumber(nutriments['energy-kcal_100g']) > 0 ||
-					toNumber(nutriments.proteins_100g) > 0 ||
-					toNumber(nutriments.carbohydrates_100g) > 0 ||
-					toNumber(nutriments.fat_100g) > 0 ||
-					toNumber(nutriments.fiber_100g) > 0
-			};
-		})
-		.filter((product: OffSearchResult | null): product is OffSearchResult => product !== null);
+	throw new Error(`No se pudo buscar en OpenFoodFacts: ${lastError}`);
 }
 
 export function offToFood(product: OffProduct, barcode: string): Omit<Food, 'id'> {
