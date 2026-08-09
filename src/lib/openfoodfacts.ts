@@ -101,7 +101,7 @@ export async function searchProducts(query: string): Promise<OffSearchResult[]> 
 			if (!Array.isArray(data.products)) throw new Error('Respuesta inesperada');
 			return data.products
 				.map((product: unknown) => toSearchResult(product as Record<string, unknown>))
-				.filter((product): product is OffSearchResult => product !== null);
+				.filter((product: OffSearchResult | null): product is OffSearchResult => product !== null);
 		} catch (error) {
 			lastError = error instanceof Error ? error.message : 'Error de red';
 		}
