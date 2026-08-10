@@ -18,12 +18,22 @@ export interface Food {
 	createdAt: number;
 }
 
+export type MealType = 'desayuno' | 'comida' | 'cena' | 'snack';
+
+export const MEAL_TYPES: { key: MealType; label: string }[] = [
+	{ key: 'desayuno', label: 'Desayuno' },
+	{ key: 'comida', label: 'Comida' },
+	{ key: 'cena', label: 'Cena' },
+	{ key: 'snack', label: 'Snack' }
+];
+
 export interface Entry {
 	id?: number;
 	date: string;
 	foodId?: number;
 	name: string;
 	grams: number;
+	mealType?: MealType;
 	kcal: number;
 	protein: number;
 	carbs: number;
@@ -41,3 +51,12 @@ db.version(1).stores({
 	foods: '++id, &barcode, name',
 	entries: '++id, date, foodId'
 });
+
+db.version(2)
+	.stores({
+		foods: '++id, &barcode, name',
+		entries: '++id, date, foodId, mealType'
+	})
+	.upgrade((tx) => tx.table('entries').toCollection().modify((entry: Entry) => {
+		entry.mealType = 'comida';
+	}));

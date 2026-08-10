@@ -1,13 +1,14 @@
 <script lang="ts">
-	import { db, type Food } from '$lib/db';
+	import { db, type Food, type MealType, MEAL_TYPES } from '$lib/db';
 	import { fmt } from '$lib/format';
 
-	let { onAdd }: { onAdd: (food: Food, grams: number) => void } = $props();
+	let { onAdd }: { onAdd: (food: Food, grams: number, mealType: MealType) => void } = $props();
 
 	let query = $state('');
 	let foods: Food[] = $state([]);
 	let selected: Food | null = $state(null);
 	let grams = $state(100);
+	let mealType = $state<MealType>('comida');
 
 	const results = $derived.by(() => {
 		const q = query.trim().toLowerCase();
@@ -32,9 +33,10 @@
 
 	function add() {
 		if (!selected) return;
-		onAdd(selected, grams);
+		onAdd(selected, grams, mealType);
 		selected = null;
 		grams = 100;
+		mealType = 'comida';
 	}
 </script>
 
@@ -66,6 +68,13 @@
 			</div>
 			<div class="row">
 				<label>Gramos<input type="number" min="1" bind:value={grams} /></label>
+				<label class="type-label">Tipo
+					<select bind:value={mealType}>
+						{#each MEAL_TYPES as type}
+							<option value={type.key}>{type.label}</option>
+						{/each}
+					</select>
+				</label>
 				<button onclick={add}>Añadir</button>
 			</div>
 		</div>
@@ -108,5 +117,19 @@
 
 	.sel-head {
 		justify-content: space-between;
+	}
+
+	select {
+		font: inherit;
+		background: var(--bg);
+		color: var(--text);
+		border: 1px solid var(--border);
+		border-radius: 8px;
+		padding: 8px 10px;
+		width: 100%;
+	}
+
+	.type-label {
+		min-width: 120px;
 	}
 </style>

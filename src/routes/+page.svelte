@@ -2,6 +2,7 @@
 	import { onMount } from 'svelte';
 	import { diary, goals, saveGoals, today } from '$lib/stores.svelte';
 	import { fmt } from '$lib/format';
+	import { MEAL_TYPES, type Entry, type MealType } from '$lib/db';
 	import MacroBar from '$lib/components/MacroBar.svelte';
 	import FoodPicker from '$lib/components/FoodPicker.svelte';
 
@@ -20,6 +21,41 @@
 			month: 'long'
 		})
 	);
+
+	const groups = $derived.by(() =>
+		MEAL_TYPES.map((type) => {
+			const entries = diary.entries.filter((entry) => (entry.mealType ?? 'comida') === type.key);
+			if (entries.length === 0) return null;
+			return {
+				...type,
+				entries,
+				totals: {
+					kcal: entries.reduce((acc, e) => acc + e.kcal, 0),
+					protein: entries.reduce((acc, e) => acc + e.protein, 0),
+					carbs: entries.reduce((acc, e) => acc + e.carbs, 0),
+					fat: entries.reduce((acc, e) => acc + e.fat, 0),
+					fiber: entries.reduce((acc, e) => acc + e.fiber, 0)
+				}
+			};
+		}).filter((group): group is NonNullable<typeof group> => group !== null)
+	);
+
+	let editingId = $state<number | null>(null);
+	let editGrams = $state('100');
+	let editType = $state<MealType>('comida');
+
+	function startEdit(entry: Entry) {
+		editingId = entry.id!;
+		editGrams = String(entry.grams);
+		editType = entry.mealType ?? 'comida';
+	}
+
+	async function saveEdit() {
+		if (editingId === null) return;
+		const grams = parseFloat(editGrams);
+		if (grams > 0) await diary.updateEntry(editingId, { grams, mealType: editType });
+		editingId = null;
+	}
 
 	onMount(() => diary.load());
 
@@ -69,19 +105,49 @@
 	{#if diary.entries.length === 0}
 		<p class="muted">Nada registrado todavía.</p>
 	{:else}
-		<ul>
-			{#each diary.entries as entry (entry.id)}
-				<li class="entry">
-					<div class="entry-info">
-						<strong>{entry.name}</strong>
-						<small class="muted">
-							{fmt(entry.grams)} g · {fmt(entry.kcal)} kcal · P {fmt(entry.protein)} · C {fmt(entry.carbs)} · G {fmt(entry.fat)} · F {fmt(entry.fiber)}
-						</small>
-					</div>
-					<button class="danger" onclick={() => diary.remove(entry.id!)}>✕</button>
-				</li>
-			{/each}
-		</ul>
+		{#each groups as group}
+			<div class="group">
+				<div class="group-head">
+					<strong>{group.label}</strong>
+					<small class="muted">
+						{fmt(group.totals.kcal)} kcal · P {fmt(group.totals.protein)} · C {fmt(group.totals.carbs)} · G {fmt(group.totals.fat)} · F {fmt(group.totals.fiber)}
+					</small>
+				</div>
+				<ul>
+					{#each group.entries as entry (entry.id)}
+						<li class="entry">
+							{#if editingId === entry.id}
+								<div class="row edit-row">
+									<label>Gramos<input type="number" min="1" bind:value={editGrams} /></label>
+									<label>Tipo
+										<select bind:value={editType}>
+											{#each MEAL_TYPES as type}
+												<option value={type.key}>{type.label}</option>
+											{/each}
+										</select>
+									</label>
+									<div class="row">
+										<button onclick={saveEdit}>Guardar</button>
+										<button class="secondary" onclick={() => (editingId = null)}>Cancelar</button>
+									</div>
+								</div>
+							{:else}
+								<div class="entry-info">
+									<strong>{entry.name}</strong>
+									<small class="muted">
+										{fmt(entry.grams)} g · {fmt(entry.kcal)} kcal · P {fmt(entry.protein)} · C {fmt(entry.carbs)} · G {fmt(entry.fat)} · F {fmt(entry.fiber)}
+									</small>
+								</div>
+								<div class="row">
+									<button class="secondary icon-btn" onclick={() => startEdit(entry)} title="Editar">✎</button>
+									<button class="danger" onclick={() => diary.remove(entry.id!)}>✕</button>
+								</div>
+							{/if}
+						</li>
+					{/each}
+				</ul>
+			</div>
+		{/each}
 	{/if}
 </section>
 
@@ -112,6 +178,41 @@
 
 	.entry:last-child {
 		border-bottom: none;
+	}
+
+	.group + .group {
+		margin-top: 14px;
+	}
+
+	.group-head {
+		display: flex;
+		justify-content: space-between;
+		align-items: baseline;
+		gap: 8px;
+		padding: 8px 10px;
+		background: var(--panel-2);
+		border-radius: 8px;
+	}
+
+	.edit-row {
+		flex-wrap: wrap;
+		width: 100%;
+		align-items: flex-end;
+	}
+
+	.edit-row label {
+		flex: 1;
+		min-width: 90px;
+	}
+
+	select {
+		font: inherit;
+		background: var(--bg);
+		color: var(--text);
+		border: 1px solid var(--border);
+		border-radius: 8px;
+		padding: 8px 10px;
+		width: 100%;
 	}
 
 	.entry-info {

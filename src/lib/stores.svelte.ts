@@ -1,4 +1,4 @@
-import { db, type Entry, type Food } from './db';
+import { db, type Entry, type Food, type MealType } from './db';
 
 const GOALS_KEY = 'macrotrack:goals';
 
@@ -67,16 +67,35 @@ class DiaryStore {
 		await this.load();
 	}
 
-	async addFood(food: Food, grams: number) {
+	async addFood(food: Food, grams: number, mealType: MealType = 'comida') {
 		const totals = foodAtGrams(food, grams);
 		await db.entries.add({
 			date: this.date,
 			foodId: food.id,
 			name: food.name,
 			grams,
+			mealType,
 			...totals,
 			createdAt: Date.now()
 		});
+		await this.load();
+	}
+
+	async updateEntry(id: number, patch: { grams?: number; mealType?: MealType }) {
+		const entry = this.entries.find((entry) => entry.id === id);
+		if (!entry) return;
+		const grams = patch.grams ?? entry.grams;
+		let data: Partial<Entry> = { grams, mealType: patch.mealType ?? entry.mealType };
+		if (patch.grams !== undefined) {
+			if (entry.foodId) {
+				const food = await db.foods.get(entry.foodId);
+				if (food) data = { ...data, ...foodAtGrams(food, grams) };
+			} else {
+				const factor = entry.grams > 0 ? grams / entry.grams : 0;
+				data = { ...data, kcal: entry.kcal * factor, protein: entry.protein * factor, carbs: entry.carbs * factor, fat: entry.fat * factor, fiber: entry.fiber * factor };
+			}
+		}
+		await db.entries.update(id, data);
 		await this.load();
 	}
 
