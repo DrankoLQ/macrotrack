@@ -23,6 +23,7 @@ export const SEED_FOODS: Omit<Food, 'id' | 'createdAt'>[] = [
 	{ name: 'Salmón', base: 100, kcal: 208, protein: 20, carbs: 0, fat: 13, fiber: 0, source: 'builtin' },
 	{ name: 'Atún en lata', base: 100, kcal: 132, protein: 28, carbs: 0, fat: 1, fiber: 0, source: 'builtin' },
 	{ name: 'Huevo', base: 100, kcal: 155, protein: 12.6, carbs: 1.1, fat: 10.6, fiber: 0, source: 'builtin' },
+	{ name: 'Yema de huevo', base: 100, kcal: 322, protein: 15.9, carbs: 3.6, fat: 26.5, fiber: 0, source: 'builtin' },
 	{ name: 'Miel', base: 100, kcal: 304, protein: 0.3, carbs: 82.4, fat: 0, fiber: 0.2, source: 'builtin' },
 	{ name: 'Leche entera', base: 100, kcal: 61, protein: 3.2, carbs: 4.8, fat: 3.3, fiber: 0, source: 'builtin' },
 	{ name: 'Yogur natural', base: 100, kcal: 61, protein: 3.5, carbs: 4.7, fat: 3.3, fiber: 0, source: 'builtin' },

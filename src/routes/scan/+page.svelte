@@ -20,6 +20,7 @@
 	let manualCode = $state('');
 	let editedName = $state('');
 	let manualName = $state('');
+	let manualBrand = $state('');
 	const manual = $state({ kcal: '', protein: '', carbs: '', fat: '', fiber: '' });
 
 	const hints = new Map();
@@ -108,6 +109,7 @@
 		}
 		status = 'notfound';
 		manualName = '';
+		manualBrand = '';
 		Object.assign(manual, { kcal: '', protein: '', carbs: '', fat: '', fiber: '' });
 	}
 
@@ -142,7 +144,8 @@
 		const toNumber = (value: string) => parseFloat(value) || 0;
 		await saveFood({
 			name,
-			barcode: code,
+			barcode: code.trim() || undefined,
+			brand: manualBrand.trim() || undefined,
 			base: 100,
 			kcal: toNumber(manual.kcal),
 			protein: toNumber(manual.protein),
@@ -152,6 +155,9 @@
 			source: 'manual',
 			createdAt: Date.now()
 		});
+		manualName = '';
+		manualBrand = '';
+		Object.assign(manual, { kcal: '', protein: '', carbs: '', fat: '', fiber: '' });
 		resetResult();
 	}
 
@@ -225,21 +231,26 @@
 
 {#if status === 'notfound'}
 	<section class="card">
-		<h2>No encontrado</h2>
-		<p class="muted">El código {code} no está en tu base de datos ni en OpenFoodFacts. Añádelo manualmente:</p>
-		<div class="manual-form">
-			<label>Nombre<input bind:value={manualName} placeholder="Ej: Galletas de avena" /></label>
-			<div class="grid">
-				<label>kcal / 100g<input type="number" bind:value={manual.kcal} /></label>
-				<label>Proteína / 100g<input type="number" bind:value={manual.protein} /></label>
-				<label>Hidratos / 100g<input type="number" bind:value={manual.carbs} /></label>
-				<label>Grasas / 100g<input type="number" bind:value={manual.fat} /></label>
-				<label>Fibra / 100g<input type="number" bind:value={manual.fiber} /></label>
-			</div>
-			<button onclick={addManual} disabled={!manualName.trim()}>Guardar en base de datos</button>
-		</div>
+		<p class="muted">El código {code} no está en tu base de datos ni en OpenFoodFacts.</p>
 	</section>
 {/if}
+
+<section class="card">
+	<h2>Añadir manualmente</h2>
+	<p class="muted">Si el producto no tiene código de barras o no se encuentra, rellena los datos:</p>
+	<div class="manual-form">
+		<label>Nombre<input bind:value={manualName} placeholder="Ej: Galletas de avena" /></label>
+		<label>Marca<input bind:value={manualBrand} placeholder="Ej: Hacendado" /></label>
+		<div class="grid">
+			<label>kcal / 100g<input type="number" bind:value={manual.kcal} /></label>
+			<label>Proteína / 100g<input type="number" bind:value={manual.protein} /></label>
+			<label>Hidratos / 100g<input type="number" bind:value={manual.carbs} /></label>
+			<label>Grasas / 100g<input type="number" bind:value={manual.fat} /></label>
+			<label>Fibra / 100g<input type="number" bind:value={manual.fiber} /></label>
+		</div>
+		<button onclick={addManual} disabled={!manualName.trim()}>Guardar en base de datos</button>
+	</div>
+</section>
 
 <style>
 	.video-wrap {
