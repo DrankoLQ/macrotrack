@@ -8,6 +8,7 @@ export const SEED_FOODS: Omit<Food, 'id' | 'createdAt'>[] = [
 	{ name: 'Sandía', base: 100, kcal: 30, protein: 0.6, carbs: 7.6, fat: 0.2, fiber: 0.4, source: 'builtin' },
 	{ name: 'Melón', base: 100, kcal: 34, protein: 0.8, carbs: 8.2, fat: 0.2, fiber: 0.9, source: 'builtin' },
 	{ name: 'Tomate', base: 100, kcal: 18, protein: 0.9, carbs: 3.9, fat: 0.2, fiber: 1.2, source: 'builtin' },
+	{ name: 'Pepino', base: 100, kcal: 15, protein: 0.7, carbs: 3.6, fat: 0.1, fiber: 0.5, source: 'builtin' },
 	{ name: 'Plátano', base: 100, kcal: 89, protein: 1.1, carbs: 22.8, fat: 0.3, fiber: 2.6, source: 'builtin' },
 	{ name: 'Manzana', base: 100, kcal: 52, protein: 0.3, carbs: 13.8, fat: 0.2, fiber: 2.4, source: 'builtin' },
 	{ name: 'Patata cocida', base: 100, kcal: 87, protein: 1.9, carbs: 20.1, fat: 0.1, fiber: 1.8, source: 'builtin' },
