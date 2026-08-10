@@ -97,7 +97,7 @@
 
 <section class="card">
 	<h2>Añadir</h2>
-	<FoodPicker onAdd={(food, grams) => diary.addFood(food, grams)} />
+	<FoodPicker onAdd={(food, grams, mealType) => diary.addFood(food, grams, mealType)} />
 </section>
 
 <section class="card">
