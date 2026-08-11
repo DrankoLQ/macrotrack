@@ -23,8 +23,8 @@ export type MealType = 'desayuno' | 'comida' | 'cena' | 'snack';
 export const MEAL_TYPES: { key: MealType; label: string }[] = [
 	{ key: 'desayuno', label: 'Desayuno' },
 	{ key: 'comida', label: 'Comida' },
-	{ key: 'cena', label: 'Cena' },
-	{ key: 'snack', label: 'Snack' }
+	{ key: 'snack', label: 'Snack' },
+	{ key: 'cena', label: 'Cena' }
 ];
 
 export function suggestMealType(now: Date = new Date()): MealType {
