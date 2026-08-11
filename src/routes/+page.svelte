@@ -53,19 +53,29 @@
 
 	let editingId = $state<number | null>(null);
 	let editGrams = $state('100');
+	let editUnits = $state('1');
 	let editType = $state<MealType>('comida');
 	let confirmEntry = $state<Entry | null>(null);
 
 	function startEdit(entry: Entry) {
 		editingId = entry.id!;
 		editGrams = String(entry.grams);
+		editUnits = String(entry.units ?? 1);
 		editType = entry.mealType ?? 'comida';
 	}
 
 	async function saveEdit() {
 		if (editingId === null) return;
-		const grams = parseFloat(editGrams);
-		if (grams > 0) await diary.updateEntry(editingId, { grams, mealType: editType });
+		const entry = diary.entries.find((entry) => entry.id === editingId);
+		if (!entry) return;
+		const byUnit = entry.unitSize !== undefined;
+		const grams = byUnit ? parseFloat(editUnits) * entry.unitSize! : parseFloat(editGrams);
+		if (grams > 0)
+			await diary.updateEntry(editingId, {
+				grams,
+				units: byUnit ? parseFloat(editUnits) : undefined,
+				mealType: editType
+			});
 		editingId = null;
 	}
 
@@ -121,7 +131,7 @@
 <Card>
 	<CardContent>
 		<h2 class="mb-3 text-base font-semibold">Añadir</h2>
-		<FoodPicker onAdd={(food, grams, mealType) => diary.addFood(food, grams, mealType)} />
+		<FoodPicker onAdd={(food, grams, mealType, units) => diary.addFood(food, grams, mealType, units)} />
 	</CardContent>
 </Card>
 
@@ -145,8 +155,12 @@
 								{#if editingId === entry.id}
 									<div class="flex w-full flex-wrap items-end gap-2">
 										<div class="min-w-[90px] flex-1">
-											<Label class="mb-1 block">Gramos</Label>
-											<Input type="number" min="1" bind:value={editGrams} inputmode="decimal" />
+											<Label class="mb-1 block">{entry.unitSize !== undefined ? 'Unidades' : 'Gramos'}</Label>
+											{#if entry.unitSize !== undefined}
+												<Input type="number" min="0.1" bind:value={editUnits} inputmode="decimal" />
+											{:else}
+												<Input type="number" min="1" bind:value={editGrams} inputmode="decimal" />
+											{/if}
 										</div>
 										<div class="min-w-[120px] flex-1">
 											<Label class="mb-1 block">Tipo</Label>
@@ -170,7 +184,7 @@
 									<div class="flex min-w-0 flex-col gap-0.5">
 										<strong class="text-sm">{entry.name}</strong>
 										<small class="text-xs text-muted-foreground">
-											{fmt(entry.grams)} g · {fmt(entry.kcal)} kcal · P {fmt(entry.protein)} · C {fmt(entry.carbs)} · G {fmt(entry.fat)} · F {fmt(entry.fiber)}
+											{#if entry.units !== undefined}{fmt(entry.units)} ud · {/if}{fmt(entry.grams)} g · {fmt(entry.kcal)} kcal · P {fmt(entry.protein)} · C {fmt(entry.carbs)} · G {fmt(entry.fat)} · F {fmt(entry.fiber)}
 										</small>
 									</div>
 									<div class="flex shrink-0 gap-1.5">
@@ -201,7 +215,7 @@
 <ConfirmDialog
 	open={confirmEntry !== null}
 	title="Eliminar comida"
-	message={'¿Eliminar «' + (confirmEntry?.name ?? '') + '» (' + (confirmEntry?.grams ?? '') + ' g) del diario? Esta acción no se puede deshacer.'}
+	message={'¿Eliminar «' + (confirmEntry?.name ?? '') + '» (' + (confirmEntry?.units !== undefined ? (confirmEntry?.units ?? '') + ' ud · ' : '') + (confirmEntry?.grams ?? '') + ' g) del diario? Esta acción no se puede deshacer.'}
 	onConfirm={() => {
 		if (confirmEntry?.id !== undefined) diary.remove(confirmEntry.id);
 	}}

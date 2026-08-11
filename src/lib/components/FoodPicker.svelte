@@ -7,12 +7,13 @@
 	import * as Select from '$lib/components/ui/select';
 	import { Select as SelectPrimitive } from 'bits-ui';
 
-	let { onAdd }: { onAdd: (food: Food, grams: number, mealType: MealType) => void } = $props();
+	let { onAdd }: { onAdd: (food: Food, grams: number, mealType: MealType, units?: number) => void } = $props();
 
 	let query = $state('');
 	let foods: Food[] = $state([]);
 	let selected: Food | null = $state(null);
 	let grams = $state(100);
+	let units = $state(1);
 	let mealType = $state<MealType>(suggestMealType());
 
 	const results = $derived.by(() => {
@@ -38,9 +39,11 @@
 
 	function add() {
 		if (!selected) return;
-		onAdd(selected, grams, mealType);
+		const byUnit = selected.unitSize !== undefined;
+		onAdd(selected, byUnit ? units * selected.unitSize! : grams, mealType, byUnit ? units : undefined);
 		selected = null;
 		grams = 100;
+		units = 1;
 		mealType = suggestMealType();
 	}
 </script>
@@ -69,12 +72,21 @@
 					{selected.name}
 					{#if selected.brand}<span class="text-xs text-muted-foreground"> · {selected.brand}</span>{/if}
 				</strong>
+				{#if selected.unitSize}
+				<small class="shrink-0 text-muted-foreground">1 ud = {fmt(selected.unitSize)} g</small>
+			{:else}
 				<small class="shrink-0 text-muted-foreground">{fmt(selected.kcal)} kcal / {selected.base}g</small>
+			{/if}
 			</div>
 			<div class="flex items-end gap-2">
 				<div class="min-w-0 flex-1">
-					<Label class="mb-1 block">Gramos</Label>
-					<Input type="number" min="1" bind:value={grams} inputmode="decimal" />
+					{#if selected.unitSize}
+						<Label class="mb-1 block">Unidades</Label>
+						<Input type="number" min="0.1" bind:value={units} inputmode="decimal" />
+					{:else}
+						<Label class="mb-1 block">Gramos</Label>
+						<Input type="number" min="1" bind:value={grams} inputmode="decimal" />
+					{/if}
 				</div>
 				<div class="min-w-0 flex-1">
 					<Label class="mb-1 block">Tipo</Label>

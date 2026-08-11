@@ -7,6 +7,7 @@ export interface Food {
 	name: string;
 	brand?: string;
 	barcode?: string;
+	unitSize?: number;
 	base: number;
 	kcal: number;
 	protein: number;
@@ -42,6 +43,8 @@ export interface Entry {
 	foodId?: number;
 	name: string;
 	grams: number;
+	units?: number;
+	unitSize?: number;
 	mealType?: MealType;
 	kcal: number;
 	protein: number;

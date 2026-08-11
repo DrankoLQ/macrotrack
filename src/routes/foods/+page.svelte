@@ -30,6 +30,7 @@
 		name: '',
 		brand: '',
 		barcode: '',
+		unitSize: '',
 		kcal: '',
 		protein: '',
 		carbs: '',
@@ -71,6 +72,7 @@
 			name,
 			brand: form.brand.trim() || undefined,
 			barcode: form.barcode.trim() || undefined,
+			unitSize: toNumber(form.unitSize) > 0 ? toNumber(form.unitSize) : undefined,
 			base: 100,
 			kcal: toNumber(form.kcal),
 			protein: toNumber(form.protein),
@@ -89,7 +91,7 @@
 			formError = 'Ya existe un alimento con ese código de barras';
 			return;
 		}
-		Object.assign(form, { name: '', brand: '', barcode: '', kcal: '', protein: '', carbs: '', fat: '', fiber: '' });
+		Object.assign(form, { name: '', brand: '', barcode: '', unitSize: '', kcal: '', protein: '', carbs: '', fat: '', fiber: '' });
 		editingId = null;
 		showForm = false;
 		saved = name;
@@ -102,6 +104,7 @@
 			name: food.name,
 			brand: food.brand ?? '',
 			barcode: food.barcode ?? '',
+			unitSize: food.unitSize ? String(food.unitSize) : '',
 			kcal: String(food.kcal),
 			protein: String(food.protein),
 			carbs: String(food.carbs),
@@ -193,6 +196,10 @@
 					<Label class="mb-1 block">Código de barras</Label>
 					<Input bind:value={form.barcode} placeholder="Opcional" inputmode="numeric" />
 				</div>
+				<div>
+					<Label class="mb-1 block">Gramos por unidad</Label>
+					<Input type="number" min="0.1" bind:value={form.unitSize} placeholder="Opcional · ej: 66 helado, 330 lata" inputmode="decimal" />
+				</div>
 				<div class="grid grid-cols-2 gap-2">
 					<div>
 						<Label class="mb-1 block">kcal / 100g</Label>
@@ -274,7 +281,7 @@
 							</strong>
 							<small class="text-xs text-muted-foreground">
 								{#if food.barcode}<span>{food.barcode} · </span>{/if}
-								{fmt(food.kcal)} kcal · P {fmt(food.protein)} · C {fmt(food.carbs)} · G {fmt(food.fat)} · F {fmt(food.fiber)} / {food.base}g{#if food.source !== 'builtin'} · {food.source}{/if}
+								{fmt(food.kcal)} kcal · P {fmt(food.protein)} · C {fmt(food.carbs)} · G {fmt(food.fat)} · F {fmt(food.fiber)} / {food.base}g{#if food.unitSize} · 1 ud = {fmt(food.unitSize)} g{/if}{#if food.source !== 'builtin'} · {food.source}{/if}
 							</small>
 						</div>
 						<div class="flex shrink-0 gap-1.5">

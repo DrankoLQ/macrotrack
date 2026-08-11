@@ -79,13 +79,20 @@ class DiaryStore {
 		await this.load();
 	}
 
-	async addFood(food: Food, grams: number, mealType: MealType = suggestMealType()) {
+	async addFood(
+		food: Food,
+		grams: number,
+		mealType: MealType = suggestMealType(),
+		units?: number
+	) {
 		const totals = foodAtGrams(food, grams);
 		await db.entries.add({
 			date: this.date,
 			foodId: food.id,
 			name: food.name,
 			grams,
+			units,
+			unitSize: units !== undefined ? food.unitSize : undefined,
 			mealType,
 			...totals,
 			createdAt: Date.now()
@@ -93,11 +100,12 @@ class DiaryStore {
 		await this.load();
 	}
 
-	async updateEntry(id: number, patch: { grams?: number; mealType?: MealType }) {
+	async updateEntry(id: number, patch: { grams?: number; units?: number; mealType?: MealType }) {
 		const entry = this.entries.find((entry) => entry.id === id);
 		if (!entry) return;
 		const grams = patch.grams ?? entry.grams;
 		let data: Partial<Entry> = { grams, mealType: patch.mealType ?? entry.mealType };
+		if (patch.units !== undefined) data = { ...data, units: patch.units };
 		if (patch.grams !== undefined) {
 			if (entry.foodId) {
 				const food = await db.foods.get(entry.foodId);
