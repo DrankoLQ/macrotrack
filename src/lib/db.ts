@@ -27,6 +27,15 @@ export const MEAL_TYPES: { key: MealType; label: string }[] = [
 	{ key: 'snack', label: 'Snack' }
 ];
 
+export function suggestMealType(now: Date = new Date()): MealType {
+	const hour = now.getHours();
+	if (hour >= 5 && hour < 11) return 'desayuno';
+	if (hour >= 11 && hour < 16) return 'comida';
+	if (hour >= 16 && hour < 19) return 'snack';
+	if (hour >= 19 && hour < 22) return 'cena';
+	return 'snack';
+}
+
 export interface Entry {
 	id?: number;
 	date: string;

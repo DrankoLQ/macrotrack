@@ -1,4 +1,4 @@
-import { db, type Entry, type Food, type MealType } from './db';
+import { db, suggestMealType, type Entry, type Food, type MealType } from './db';
 
 const GOALS_KEY = 'macrotrack:goals';
 
@@ -67,7 +67,7 @@ class DiaryStore {
 		await this.load();
 	}
 
-	async addFood(food: Food, grams: number, mealType: MealType = 'comida') {
+	async addFood(food: Food, grams: number, mealType: MealType = suggestMealType()) {
 		const totals = foodAtGrams(food, grams);
 		await db.entries.add({
 			date: this.date,

@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { db, type Food, type MealType, MEAL_TYPES } from '$lib/db';
+	import { db, type Food, type MealType, MEAL_TYPES, suggestMealType } from '$lib/db';
 	import { fmt } from '$lib/format';
 
 	let { onAdd }: { onAdd: (food: Food, grams: number, mealType: MealType) => void } = $props();
@@ -8,7 +8,7 @@
 	let foods: Food[] = $state([]);
 	let selected: Food | null = $state(null);
 	let grams = $state(100);
-	let mealType = $state<MealType>('comida');
+	let mealType = $state<MealType>(suggestMealType());
 
 	const results = $derived.by(() => {
 		const q = query.trim().toLowerCase();
@@ -36,7 +36,7 @@
 		onAdd(selected, grams, mealType);
 		selected = null;
 		grams = 100;
-		mealType = 'comida';
+		mealType = suggestMealType();
 	}
 </script>
 
