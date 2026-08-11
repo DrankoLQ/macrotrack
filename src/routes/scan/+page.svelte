@@ -5,6 +5,10 @@
 	import { diary } from '$lib/stores.svelte';
 	import { fetchProductByBarcode, offToFood, type OffProduct } from '$lib/openfoodfacts';
 	import { fmt } from '$lib/format';
+	import { Card, CardContent } from '$lib/components/ui/card';
+	import { Button } from '$lib/components/ui/button';
+	import { Input } from '$lib/components/ui/input';
+	import { Label } from '$lib/components/ui/label';
 
 	type Status = 'idle' | 'starting' | 'scanning' | 'found' | 'notfound' | 'error';
 
@@ -169,134 +173,115 @@
 	}
 </script>
 
-<section class="card">
-	<h2>Escanear código de barras</h2>
-	{#if status === 'scanning' || status === 'starting'}
-		<div class="video-wrap">
-			<video id="scanner-video" playsinline muted></video>
-		</div>
-		<button class="secondary" onclick={stopScanning}>Detener</button>
-	{:else}
-		<button onclick={start}>Iniciar cámara</button>
-	{/if}
-	{#if status === 'error'}
-		<p class="error">{errorMsg}. Prueba desde Safari o usa el código manual.</p>
-	{/if}
-	<div class="manual">
-		<label>Código manual
-			<div class="row">
-				<input
-					bind:value={manualCode}
-					placeholder="8412345678901"
-					inputmode="numeric"
-				/>
-				<button class="secondary" onclick={() => handleCode(manualCode)}>Buscar</button>
+<Card>
+	<CardContent class="flex flex-col gap-3">
+		<h2 class="text-base font-semibold">Escanear código de barras</h2>
+		{#if status === 'scanning' || status === 'starting'}
+			<div class="mb-3 overflow-hidden rounded-xl bg-black">
+				<video id="scanner-video" class="block h-80 w-full object-cover" playsinline muted></video>
 			</div>
-		</label>
-	</div>
-</section>
+			<Button variant="outline" onclick={stopScanning}>Detener</Button>
+		{:else}
+			<Button onclick={start}>Iniciar cámara</Button>
+		{/if}
+		{#if status === 'error'}
+			<p class="text-sm text-destructive">{errorMsg}. Prueba desde Safari o usa el código manual.</p>
+		{/if}
+		<div class="mt-3">
+			<Label class="mb-1 block">Código manual</Label>
+			<div class="flex gap-2">
+				<Input bind:value={manualCode} placeholder="8412345678901" inputmode="numeric" />
+				<Button variant="outline" onclick={() => handleCode(manualCode)}>Buscar</Button>
+			</div>
+		</div>
+	</CardContent>
+</Card>
 
 {#if added}
-	<section class="card">
-		<p class="added">«{added}» guardado en tu base de datos ✓ <a href="/">Ir al diario</a></p>
-		<button class="secondary" onclick={() => (added = null)}>Escanear otro</button>
-	</section>
+	<Card>
+		<CardContent class="flex flex-col gap-2">
+			<p class="font-semibold">«{added}» guardado en tu base de datos ✓ <a class="text-primary underline-offset-4 hover:underline" href="/">Ir al diario</a></p>
+			<Button variant="outline" onclick={() => (added = null)}>Escanear otro</Button>
+		</CardContent>
+	</Card>
 {/if}
 
 {#if display}
-	<section class="card">
-		{#if offProduct}
-			<label>Nombre (editable)<input bind:value={editedName} /></label>
-		{:else}
-			<h2>{display.name}</h2>
-		{/if}
-		{#if display.brand}<p class="muted">{display.brand}</p>{/if}
-		{#if display.imageUrl}
-			<img class="thumb" src={display.imageUrl} alt="" />
-		{/if}
-		<p class="muted">
-			Código {code} · {fmt(display.kcal)} kcal · P {fmt(display.protein)} · C {fmt(display.carbs)} · G {fmt(display.fat)} · F {fmt(display.fiber)} / 100g
-		</p>
-		<div class="row">
-			<label>Gramos<input type="number" min="1" bind:value={grams} inputmode="decimal" /></label>
-			{#if localFood}
-				<button onclick={addFromLocal}>Añadir al diario</button>
+	<Card>
+		<CardContent class="flex flex-col gap-3">
+			{#if offProduct}
+				<div>
+					<Label class="mb-1 block">Nombre (editable)</Label>
+					<Input bind:value={editedName} />
+				</div>
 			{:else}
-				<button onclick={addFromOff}>Guardar en base de datos</button>
+				<h2 class="text-base font-semibold">{display.name}</h2>
 			{/if}
-		</div>
-		<button class="secondary" onclick={resetResult}>Cancelar</button>
-	</section>
+			{#if display.brand}<p class="text-sm text-muted-foreground">{display.brand}</p>{/if}
+			{#if display.imageUrl}
+				<img class="h-18 w-18 rounded-lg object-cover" src={display.imageUrl} alt="" />
+			{/if}
+			<p class="text-sm text-muted-foreground">
+				Código {code} · {fmt(display.kcal)} kcal · P {fmt(display.protein)} · C {fmt(display.carbs)} · G {fmt(display.fat)} · F {fmt(display.fiber)} / 100g
+			</p>
+			<div class="flex items-end gap-2">
+				<div class="w-28">
+					<Label class="mb-1 block">Gramos</Label>
+					<Input type="number" min="1" bind:value={grams} inputmode="decimal" />
+				</div>
+				{#if localFood}
+					<Button onclick={addFromLocal}>Añadir al diario</Button>
+				{:else}
+					<Button onclick={addFromOff}>Guardar en base de datos</Button>
+				{/if}
+			</div>
+			<Button variant="outline" onclick={resetResult}>Cancelar</Button>
+		</CardContent>
+	</Card>
 {/if}
 
 {#if status === 'notfound'}
-	<section class="card">
-		<p class="muted">El código {code} no está en tu base de datos ni en OpenFoodFacts.</p>
-	</section>
+	<Card>
+		<CardContent>
+			<p class="text-sm text-muted-foreground">El código {code} no está en tu base de datos ni en OpenFoodFacts.</p>
+		</CardContent>
+	</Card>
 {/if}
 
-<section class="card">
-	<h2>Añadir manualmente</h2>
-	<p class="muted">Si el producto no tiene código de barras o no se encuentra, rellena los datos:</p>
-	<div class="manual-form">
-		<label>Nombre<input bind:value={manualName} placeholder="Ej: Galletas de avena" /></label>
-		<label>Marca<input bind:value={manualBrand} placeholder="Ej: Hacendado" /></label>
-		<div class="grid">
-			<label>kcal / 100g<input type="number" bind:value={manual.kcal} inputmode="decimal" /></label>
-			<label>Proteína / 100g<input type="number" bind:value={manual.protein} inputmode="decimal" /></label>
-			<label>Hidratos / 100g<input type="number" bind:value={manual.carbs} inputmode="decimal" /></label>
-			<label>Grasas / 100g<input type="number" bind:value={manual.fat} inputmode="decimal" /></label>
-			<label>Fibra / 100g<input type="number" bind:value={manual.fiber} inputmode="decimal" /></label>
+<Card>
+	<CardContent class="flex flex-col gap-3">
+		<h2 class="text-base font-semibold">Añadir manualmente</h2>
+		<p class="text-sm text-muted-foreground">Si el producto no tiene código de barras o no se encuentra, rellena los datos:</p>
+		<div>
+			<Label class="mb-1 block">Nombre</Label>
+			<Input bind:value={manualName} placeholder="Ej: Galletas de avena" />
 		</div>
-		<button onclick={addManual} disabled={!manualName.trim()}>Guardar en base de datos</button>
-	</div>
-</section>
-
-<style>
-	.video-wrap {
-		border-radius: 12px;
-		overflow: hidden;
-		margin-bottom: 12px;
-		background: #000;
-	}
-
-	video {
-		width: 100%;
-		height: 320px;
-		object-fit: cover;
-		display: block;
-	}
-
-	.manual {
-		margin-top: 12px;
-	}
-
-	.thumb {
-		width: 72px;
-		height: 72px;
-		border-radius: 8px;
-		object-fit: cover;
-	}
-
-	.added {
-		font-weight: 600;
-		margin: 0 0 8px;
-	}
-
-	a {
-		color: var(--accent);
-	}
-
-	.manual-form {
-		display: flex;
-		flex-direction: column;
-		gap: 10px;
-		margin-top: 8px;
-	}
-
-	.grid {
-		display: grid;
-		grid-template-columns: repeat(2, 1fr);
-		gap: 8px;
-	}
-</style>
+		<div>
+			<Label class="mb-1 block">Marca</Label>
+			<Input bind:value={manualBrand} placeholder="Ej: Hacendado" />
+		</div>
+		<div class="grid grid-cols-2 gap-2">
+			<div>
+				<Label class="mb-1 block">kcal / 100g</Label>
+				<Input type="number" bind:value={manual.kcal} inputmode="decimal" />
+			</div>
+			<div>
+				<Label class="mb-1 block">Proteína / 100g</Label>
+				<Input type="number" bind:value={manual.protein} inputmode="decimal" />
+			</div>
+			<div>
+				<Label class="mb-1 block">Hidratos / 100g</Label>
+				<Input type="number" bind:value={manual.carbs} inputmode="decimal" />
+			</div>
+			<div>
+				<Label class="mb-1 block">Grasas / 100g</Label>
+				<Input type="number" bind:value={manual.fat} inputmode="decimal" />
+			</div>
+			<div>
+				<Label class="mb-1 block">Fibra / 100g</Label>
+				<Input type="number" bind:value={manual.fiber} inputmode="decimal" />
+			</div>
+		</div>
+		<Button onclick={addManual} disabled={!manualName.trim()}>Guardar en base de datos</Button>
+	</CardContent>
+</Card>

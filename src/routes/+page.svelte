@@ -6,6 +6,16 @@
 	import MacroBar from '$lib/components/MacroBar.svelte';
 	import FoodPicker from '$lib/components/FoodPicker.svelte';
 	import ConfirmDialog from '$lib/components/ConfirmDialog.svelte';
+	import { Card, CardContent } from '$lib/components/ui/card';
+	import { Button } from '$lib/components/ui/button';
+	import { Input } from '$lib/components/ui/input';
+	import { Label } from '$lib/components/ui/label';
+	import * as Select from '$lib/components/ui/select';
+	import { Select as SelectPrimitive } from 'bits-ui';
+	import ChevronLeftIcon from '@lucide/svelte/icons/chevron-left';
+	import ChevronRightIcon from '@lucide/svelte/icons/chevron-right';
+	import PencilIcon from '@lucide/svelte/icons/pencil';
+	import Trash2Icon from '@lucide/svelte/icons/trash-2';
 
 	const macros = [
 		{ key: 'kcal', label: 'Calorías', unit: 'kcal' },
@@ -68,90 +78,125 @@
 	}
 </script>
 
-<section class="card row date-row">
-	<button class="secondary icon-btn" onclick={() => shift(-1)}>←</button>
-	<span class="date">{dateLabel}</span>
-	<button class="secondary icon-btn" onclick={() => shift(1)}>→</button>
-	<button class="secondary" onclick={() => diary.setDate(today())}>Hoy</button>
-</section>
+<Card>
+	<CardContent class="flex items-center justify-between gap-2">
+		<Button variant="outline" size="icon-sm" onclick={() => shift(-1)} aria-label="Día anterior">
+			<ChevronLeftIcon />
+		</Button>
+		<span class="flex-1 text-center text-sm capitalize">{dateLabel}</span>
+		<Button variant="outline" size="icon-sm" onclick={() => shift(1)} aria-label="Día siguiente">
+			<ChevronRightIcon />
+		</Button>
+		<Button variant="outline" size="sm" onclick={() => diary.setDate(today())}>Hoy</Button>
+	</CardContent>
+</Card>
 
-<section class="card">
-	<h2>Totales</h2>
-	{#each macros as macro}
-		<MacroBar
-			label={macro.label}
-			value={diary.totals[macro.key]}
-			goal={goals[macro.key]}
-			unit={macro.unit}
-		/>
-	{/each}
-	<details>
-		<summary>Objetivos</summary>
-		<div class="grid goals">
+<Card>
+	<CardContent>
+		<h2 class="mb-3 text-base font-semibold">Totales</h2>
+		<div class="flex flex-col gap-3">
 			{#each macros as macro}
-				<label>{macro.label}
-					<input type="number" bind:value={goals[macro.key]} onchange={saveGoals} inputmode="decimal" />
-				</label>
+				<MacroBar
+					label={macro.label}
+					value={diary.totals[macro.key]}
+					goal={goals[macro.key]}
+					unit={macro.unit}
+				/>
 			{/each}
 		</div>
-	</details>
-</section>
-
-<section class="card">
-	<h2>Añadir</h2>
-	<FoodPicker onAdd={(food, grams, mealType) => diary.addFood(food, grams, mealType)} />
-</section>
-
-<section class="card">
-	<h2>Comidas ({diary.entries.length})</h2>
-	{#if diary.entries.length === 0}
-		<p class="muted">Nada registrado todavía.</p>
-	{:else}
-		{#each groups as group}
-			<div class="group">
-				<div class="group-head">
-					<strong>{group.label}</strong>
-					<small class="muted">
-						{fmt(group.totals.kcal)} kcal · P {fmt(group.totals.protein)} · C {fmt(group.totals.carbs)} · G {fmt(group.totals.fat)} · F {fmt(group.totals.fiber)}
-					</small>
-				</div>
-				<ul>
-					{#each group.entries as entry (entry.id)}
-						<li class="entry">
-							{#if editingId === entry.id}
-								<div class="row edit-row">
-									<label>Gramos<input type="number" min="1" bind:value={editGrams} inputmode="decimal" /></label>
-									<label>Tipo
-										<select bind:value={editType}>
-											{#each MEAL_TYPES as type}
-												<option value={type.key}>{type.label}</option>
-											{/each}
-										</select>
-									</label>
-									<div class="row">
-										<button onclick={saveEdit}>Guardar</button>
-										<button class="secondary" onclick={() => (editingId = null)}>Cancelar</button>
-									</div>
-								</div>
-							{:else}
-								<div class="entry-info">
-									<strong>{entry.name}</strong>
-									<small class="muted">
-										{fmt(entry.grams)} g · {fmt(entry.kcal)} kcal · P {fmt(entry.protein)} · C {fmt(entry.carbs)} · G {fmt(entry.fat)} · F {fmt(entry.fiber)}
-									</small>
-								</div>
-								<div class="row">
-									<button class="secondary icon-btn" onclick={() => startEdit(entry)} title="Editar">✎</button>
-									<button class="danger" onclick={() => (confirmEntry = entry)}>✕</button>
-								</div>
-							{/if}
-						</li>
-					{/each}
-				</ul>
+		<details class="mt-3">
+			<summary class="cursor-pointer text-xs font-medium text-muted-foreground select-none">Objetivos</summary>
+			<div class="mt-2 grid grid-cols-2 gap-2">
+				{#each macros as macro}
+					<div>
+						<Label class="mb-1 block">{macro.label}</Label>
+						<Input type="number" bind:value={goals[macro.key]} onchange={saveGoals} inputmode="decimal" />
+					</div>
+				{/each}
 			</div>
-		{/each}
-	{/if}
-</section>
+		</details>
+	</CardContent>
+</Card>
+
+<Card>
+	<CardContent>
+		<h2 class="mb-3 text-base font-semibold">Añadir</h2>
+		<FoodPicker onAdd={(food, grams, mealType) => diary.addFood(food, grams, mealType)} />
+	</CardContent>
+</Card>
+
+<Card>
+	<CardContent>
+		<h2 class="mb-3 text-base font-semibold">Comidas ({diary.entries.length})</h2>
+		{#if diary.entries.length === 0}
+			<p class="text-sm text-muted-foreground">Nada registrado todavía.</p>
+		{:else}
+			{#each groups as group}
+				<div class="group">
+					<div class="flex items-baseline justify-between gap-2 rounded-lg bg-secondary px-2.5 py-2">
+						<strong class="text-sm">{group.label}</strong>
+						<small class="text-xs text-muted-foreground">
+							{fmt(group.totals.kcal)} kcal · P {fmt(group.totals.protein)} · C {fmt(group.totals.carbs)} · G {fmt(group.totals.fat)} · F {fmt(group.totals.fiber)}
+						</small>
+					</div>
+					<ul>
+						{#each group.entries as entry (entry.id)}
+							<li class="flex items-center justify-between gap-2 border-b border-border py-2.5 last:border-b-0">
+								{#if editingId === entry.id}
+									<div class="flex w-full flex-wrap items-end gap-2">
+										<div class="min-w-[90px] flex-1">
+											<Label class="mb-1 block">Gramos</Label>
+											<Input type="number" min="1" bind:value={editGrams} inputmode="decimal" />
+										</div>
+										<div class="min-w-[120px] flex-1">
+											<Label class="mb-1 block">Tipo</Label>
+											<Select.Root bind:value={editType}>
+												<Select.Trigger class="w-full">
+													<SelectPrimitive.Value placeholder="Tipo" />
+												</Select.Trigger>
+												<Select.Content>
+													{#each MEAL_TYPES as type}
+														<Select.Item value={type.key}>{type.label}</Select.Item>
+													{/each}
+												</Select.Content>
+											</Select.Root>
+										</div>
+										<div class="flex gap-2">
+											<Button size="sm" onclick={saveEdit}>Guardar</Button>
+											<Button size="sm" variant="outline" onclick={() => (editingId = null)}>Cancelar</Button>
+										</div>
+									</div>
+								{:else}
+									<div class="flex min-w-0 flex-col gap-0.5">
+										<strong class="text-sm">{entry.name}</strong>
+										<small class="text-xs text-muted-foreground">
+											{fmt(entry.grams)} g · {fmt(entry.kcal)} kcal · P {fmt(entry.protein)} · C {fmt(entry.carbs)} · G {fmt(entry.fat)} · F {fmt(entry.fiber)}
+										</small>
+									</div>
+									<div class="flex shrink-0 gap-1.5">
+										<Button variant="ghost" size="icon-sm" onclick={() => startEdit(entry)} title="Editar" aria-label="Editar">
+											<PencilIcon />
+										</Button>
+										<Button
+											variant="ghost"
+											size="icon-sm"
+											class="text-destructive hover:text-destructive"
+											onclick={() => (confirmEntry = entry)}
+											title="Eliminar"
+											aria-label="Eliminar"
+										>
+											<Trash2Icon />
+										</Button>
+									</div>
+								{/if}
+							</li>
+						{/each}
+					</ul>
+				</div>
+			{/each}
+		{/if}
+	</CardContent>
+</Card>
 
 <ConfirmDialog
 	open={confirmEntry !== null}
@@ -164,83 +209,7 @@
 />
 
 <style>
-	.date-row {
-		justify-content: space-between;
-	}
-
-	.date {
-		flex: 1;
-		text-align: center;
-		text-transform: capitalize;
-	}
-
-	.goals {
-		grid-template-columns: repeat(2, 1fr);
-		margin-top: 8px;
-	}
-
-	.entry {
-		display: flex;
-		justify-content: space-between;
-		align-items: center;
-		gap: 8px;
-		padding: 10px 0;
-		border-bottom: 1px solid var(--border);
-	}
-
-	.entry:last-child {
-		border-bottom: none;
-	}
-
 	.group + .group {
 		margin-top: 14px;
-	}
-
-	.group-head {
-		display: flex;
-		justify-content: space-between;
-		align-items: baseline;
-		gap: 8px;
-		padding: 8px 10px;
-		background: var(--panel-2);
-		border-radius: 8px;
-	}
-
-	.edit-row {
-		flex-wrap: wrap;
-		width: 100%;
-		align-items: flex-end;
-	}
-
-	.edit-row label {
-		flex: 1;
-		min-width: 90px;
-	}
-
-	select {
-		font: inherit;
-		background: var(--bg);
-		color: var(--text);
-		border: 1px solid var(--border);
-		border-radius: 8px;
-		padding: 8px 10px;
-		width: 100%;
-	}
-
-	.entry-info {
-		display: flex;
-		flex-direction: column;
-		gap: 2px;
-	}
-
-	.grid {
-		display: grid;
-		gap: 8px;
-	}
-
-	summary {
-		cursor: pointer;
-		color: var(--muted);
-		font-size: 0.85rem;
 	}
 </style>

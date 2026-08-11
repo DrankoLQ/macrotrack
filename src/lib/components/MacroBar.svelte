@@ -1,5 +1,7 @@
 <script lang="ts">
 	import { fmt } from '$lib/format';
+	import { Progress } from '$lib/components/ui/progress';
+	import { cn } from '$lib/utils';
 
 	let { label, value, goal, unit }: { label: string; value: number; goal: number; unit: string } = $props();
 
@@ -7,60 +9,15 @@
 	const over = $derived(value > goal);
 </script>
 
-<div class="macro">
-	<div class="head">
-		<span class="label">{label}</span>
-		<span class="value" class:over>{fmt(value)} <small>/{fmt(goal)} {unit}</small></span>
+<div class="space-y-1">
+	<div class="flex items-baseline justify-between text-sm">
+		<span class="text-muted-foreground">{label}</span>
+		<span class={cn('font-semibold', over && 'text-destructive')}>
+			{fmt(value)} <span class="font-normal text-muted-foreground">/{fmt(goal)} {unit}</span>
+		</span>
 	</div>
-	<div class="track">
-		<div class="fill" class:over style:width="{pct}%"></div>
-	</div>
+	<Progress
+		value={pct}
+		class={cn('h-1.5', over && '[&_[data-slot=progress-indicator]]:bg-destructive')}
+	/>
 </div>
-
-<style>
-	.macro {
-		margin-bottom: 12px;
-	}
-
-	.head {
-		display: flex;
-		justify-content: space-between;
-		margin-bottom: 4px;
-	}
-
-	.label {
-		color: var(--muted);
-		font-size: 0.85rem;
-	}
-
-	.value {
-		font-weight: 600;
-	}
-
-	.value small {
-		color: var(--muted);
-		font-weight: 400;
-	}
-
-	.value.over {
-		color: var(--danger);
-	}
-
-	.track {
-		height: 6px;
-		background: var(--panel-2);
-		border-radius: 3px;
-		overflow: hidden;
-	}
-
-	.fill {
-		height: 100%;
-		background: var(--accent);
-		border-radius: 3px;
-		transition: width 0.2s;
-	}
-
-	.fill.over {
-		background: var(--danger);
-	}
-</style>

@@ -3,7 +3,15 @@
 	import { db, type Food } from '$lib/db';
 	import { fmt } from '$lib/format';
 	import { searchProducts, type OffSearchResult } from '$lib/openfoodfacts';
-import ConfirmDialog from '$lib/components/ConfirmDialog.svelte';
+	import ConfirmDialog from '$lib/components/ConfirmDialog.svelte';
+	import { Card, CardContent } from '$lib/components/ui/card';
+	import { Button } from '$lib/components/ui/button';
+	import { Input } from '$lib/components/ui/input';
+	import { Label } from '$lib/components/ui/label';
+	import PencilIcon from '@lucide/svelte/icons/pencil';
+	import Trash2Icon from '@lucide/svelte/icons/trash-2';
+	import SearchIcon from '@lucide/svelte/icons/search';
+	import XIcon from '@lucide/svelte/icons/x';
 
 	let foods: Food[] = $state([]);
 	let query = $state('');
@@ -149,159 +157,154 @@ import ConfirmDialog from '$lib/components/ConfirmDialog.svelte';
 	}
 </script>
 
-<section class="card">
-	<h2>Base de datos</h2>
-	<div class="row">
-		<input type="search" placeholder="Buscar por nombre o código…" bind:value={query} />
-		{#if query}
-			<button class="secondary icon-btn" onclick={() => (query = '')} title="Limpiar búsqueda">✕</button>
-		{/if}
-		<button class="secondary" onclick={() => (showForm ? cancel() : (showForm = true))}>
-			{showForm ? 'Cancelar' : 'Nuevo alimento'}
-		</button>
-	</div>
-	{#if saved}
-		<p class="muted saved">«{saved}» guardado ✓</p>
-	{/if}
-	{#if showForm}
-		<div class="form">
-			<h3>{editingId !== null ? 'Editar alimento' : 'Nuevo alimento'}</h3>
-			{#if formError}<p class="error">{formError}</p>{/if}
-			<label>Nombre<input bind:value={form.name} placeholder="Ej: Garbanzos cocidos" /></label>
-			<label>Marca<input bind:value={form.brand} placeholder="Opcional" /></label>
-			<label>Código de barras<input bind:value={form.barcode} placeholder="Opcional" inputmode="numeric" /></label>
-			<div class="grid">
-				<label>kcal / 100g<input type="number" bind:value={form.kcal} inputmode="decimal" /></label>
-				<label>Proteína / 100g<input type="number" bind:value={form.protein} inputmode="decimal" /></label>
-				<label>Hidratos / 100g<input type="number" bind:value={form.carbs} inputmode="decimal" /></label>
-				<label>Grasas / 100g<input type="number" bind:value={form.fat} inputmode="decimal" /></label>
-				<label>Fibra / 100g<input type="number" bind:value={form.fiber} inputmode="decimal" /></label>
+<Card>
+	<CardContent class="flex flex-col gap-3">
+		<h2 class="text-base font-semibold">Base de datos</h2>
+		<div class="flex gap-2">
+			<div class="relative flex-1">
+				<SearchIcon class="absolute top-1/2 left-2.5 size-4 -translate-y-1/2 text-muted-foreground" />
+				<Input type="search" class="pl-8" placeholder="Buscar por nombre o código…" bind:value={query} />
 			</div>
-			<button onclick={save}>{editingId !== null ? 'Guardar cambios' : 'Guardar'}</button>
-		</div>
-	{/if}
-	<button class="secondary search-toggle" onclick={() => (searchOff = !searchOff)}>
-		{searchOff ? 'Cerrar búsqueda' : 'Buscar alimentos por nombre (OpenFoodFacts)'}
-	</button>
-	{#if searchOff}
-		<div class="form">
-			<div class="row">
-				<input bind:value={offQuery} placeholder="Ej: miel, patata, garbanzos…" />
-				<button onclick={search} disabled={offLoading || !offQuery.trim()}>
-					{offLoading ? 'Buscando…' : 'Buscar'}
-				</button>
-			</div>
-			{#if offError}<p class="error">{offError}</p>{/if}
-			{#if offResults.length > 0}
-				<ul>
-					{#each offResults as result, i (result.barcode ?? result.name + i)}
-						<li class="food">
-							<div class="food-info">
-								<strong>{result.name}</strong>
-								<small class="muted">
-									{#if result.brand}<span>{result.brand} · </span>{/if}
-									{#if result.barcode}<span>{result.barcode} · </span>{/if}
-									{#if result.hasNutriments}
-										{fmt(result.kcal)} kcal · P {fmt(result.protein)} · C {fmt(result.carbs)} · G {fmt(result.fat)} · F {fmt(result.fiber)} / 100g
-									{:else}
-										sin datos nutricionales
-									{/if}
-								</small>
-							</div>
-							{#if result.barcode && existingBarcodes.has(result.barcode)}
-								<button class="secondary" disabled>En BD</button>
-							{:else if savedOff.has(i)}
-								<button class="secondary" disabled>Guardado ✓</button>
-							{:else}
-								<button onclick={() => saveOffResult(result, i)}>Guardar</button>
-							{/if}
-						</li>
-					{/each}
-				</ul>
-			{:else if !offLoading}
-				<p class="muted">Busca por nombre (ej: «miel», «patata») y guarda los que quieras en tu base de datos.</p>
+			{#if query}
+				<Button variant="ghost" size="icon-sm" onclick={() => (query = '')} title="Limpiar búsqueda" aria-label="Limpiar búsqueda">
+					<XIcon />
+				</Button>
 			{/if}
+			<Button variant="outline" size="sm" onclick={() => (showForm ? cancel() : (showForm = true))}>
+				{showForm ? 'Cancelar' : 'Nuevo alimento'}
+			</Button>
 		</div>
-	{/if}
-	{#if filtered.length === 0}
-		<p class="muted">Sin resultados.</p>
-	{:else}
-		<ul>
-			{#each filtered as food (food.id)}
-				<li class="food">
-					<div class="food-info">
-						<strong>
-							{food.name}
-							{#if food.brand}<small class="muted"> · {food.brand}</small>{/if}
-						</strong>
-						<small class="muted">
-							{#if food.barcode}<span>{food.barcode} · </span>{/if}
-							{fmt(food.kcal)} kcal · P {fmt(food.protein)} · C {fmt(food.carbs)} · G {fmt(food.fat)} · F {fmt(food.fiber)} / {food.base}g · {food.source}
-						</small>
+		{#if saved}
+			<p class="text-xs text-muted-foreground">«{saved}» guardado ✓</p>
+		{/if}
+		{#if showForm}
+			<div class="flex flex-col gap-2.5 rounded-lg border border-border bg-card p-3">
+				<h3 class="text-sm font-semibold">{editingId !== null ? 'Editar alimento' : 'Nuevo alimento'}</h3>
+				{#if formError}<p class="text-sm text-destructive">{formError}</p>{/if}
+				<div>
+					<Label class="mb-1 block">Nombre</Label>
+					<Input bind:value={form.name} placeholder="Ej: Garbanzos cocidos" />
+				</div>
+				<div>
+					<Label class="mb-1 block">Marca</Label>
+					<Input bind:value={form.brand} placeholder="Opcional" />
+				</div>
+				<div>
+					<Label class="mb-1 block">Código de barras</Label>
+					<Input bind:value={form.barcode} placeholder="Opcional" inputmode="numeric" />
+				</div>
+				<div class="grid grid-cols-2 gap-2">
+					<div>
+						<Label class="mb-1 block">kcal / 100g</Label>
+						<Input type="number" bind:value={form.kcal} inputmode="decimal" />
 					</div>
-					<div class="food-actions">
-						<button class="secondary icon-btn" onclick={() => edit(food)} title="Editar">✏️</button>
-						<button class="danger" onclick={() => (confirmFood = food)}>✕</button>
+					<div>
+						<Label class="mb-1 block">Proteína / 100g</Label>
+						<Input type="number" bind:value={form.protein} inputmode="decimal" />
 					</div>
-				</li>
-			{/each}
-		</ul>
-	{/if}
-	<ConfirmDialog
-		open={confirmFood !== null}
-		title="Eliminar alimento"
-		message={'¿Eliminar «' + (confirmFood?.name ?? '') + '» de tu base de datos? Esta acción no se puede deshacer.'}
-		onConfirm={async () => {
-			if (confirmFood) await remove(confirmFood);
-		}}
-		onClose={() => (confirmFood = null)}
-	/>
-</section>
+					<div>
+						<Label class="mb-1 block">Hidratos / 100g</Label>
+						<Input type="number" bind:value={form.carbs} inputmode="decimal" />
+					</div>
+					<div>
+						<Label class="mb-1 block">Grasas / 100g</Label>
+						<Input type="number" bind:value={form.fat} inputmode="decimal" />
+					</div>
+					<div>
+						<Label class="mb-1 block">Fibra / 100g</Label>
+						<Input type="number" bind:value={form.fiber} inputmode="decimal" />
+					</div>
+				</div>
+				<Button onclick={save}>{editingId !== null ? 'Guardar cambios' : 'Guardar'}</Button>
+			</div>
+		{/if}
+		<Button variant="outline" onclick={() => (searchOff = !searchOff)}>
+			{searchOff ? 'Cerrar búsqueda' : 'Buscar alimentos por nombre (OpenFoodFacts)'}
+		</Button>
+		{#if searchOff}
+			<div class="flex flex-col gap-2">
+				<div class="flex gap-2">
+					<Input bind:value={offQuery} placeholder="Ej: miel, patata, garbanzos…" />
+					<Button onclick={search} disabled={offLoading || !offQuery.trim()}>
+						{offLoading ? 'Buscando…' : 'Buscar'}
+					</Button>
+				</div>
+				{#if offError}<p class="text-sm text-destructive">{offError}</p>{/if}
+				{#if offResults.length > 0}
+					<ul>
+						{#each offResults as result, i (result.barcode ?? result.name + i)}
+							<li class="flex items-center justify-between gap-2 border-b border-border py-2.5 last:border-b-0">
+								<div class="flex min-w-0 flex-col gap-0.5">
+									<strong class="text-sm">{result.name}</strong>
+									<small class="text-xs text-muted-foreground">
+										{#if result.brand}<span>{result.brand} · </span>{/if}
+										{#if result.barcode}<span>{result.barcode} · </span>{/if}
+										{#if result.hasNutriments}
+											{fmt(result.kcal)} kcal · P {fmt(result.protein)} · C {fmt(result.carbs)} · G {fmt(result.fat)} · F {fmt(result.fiber)} / 100g
+										{:else}
+											sin datos nutricionales
+										{/if}
+									</small>
+								</div>
+								{#if result.barcode && existingBarcodes.has(result.barcode)}
+									<Button variant="outline" size="sm" disabled>En BD</Button>
+								{:else if savedOff.has(i)}
+									<Button variant="outline" size="sm" disabled>Guardado ✓</Button>
+								{:else}
+									<Button size="sm" onclick={() => saveOffResult(result, i)}>Guardar</Button>
+								{/if}
+							</li>
+						{/each}
+					</ul>
+				{:else if !offLoading}
+					<p class="text-sm text-muted-foreground">Busca por nombre (ej: «miel», «patata») y guarda los que quieras en tu base de datos.</p>
+				{/if}
+			</div>
+		{/if}
+		{#if filtered.length === 0}
+			<p class="text-sm text-muted-foreground">Sin resultados.</p>
+		{:else}
+			<ul>
+				{#each filtered as food (food.id)}
+					<li class="flex items-center justify-between gap-2 border-b border-border py-2.5 last:border-b-0">
+						<div class="flex min-w-0 flex-col gap-0.5">
+							<strong class="text-sm">
+								{food.name}
+								{#if food.brand}<span class="text-xs text-muted-foreground"> · {food.brand}</span>{/if}
+							</strong>
+							<small class="text-xs text-muted-foreground">
+								{#if food.barcode}<span>{food.barcode} · </span>{/if}
+								{fmt(food.kcal)} kcal · P {fmt(food.protein)} · C {fmt(food.carbs)} · G {fmt(food.fat)} · F {fmt(food.fiber)} / {food.base}g · {food.source}
+							</small>
+						</div>
+						<div class="flex shrink-0 gap-1.5">
+							<Button variant="ghost" size="icon-sm" onclick={() => edit(food)} title="Editar" aria-label="Editar">
+								<PencilIcon />
+							</Button>
+							<Button
+								variant="ghost"
+								size="icon-sm"
+								class="text-destructive hover:text-destructive"
+								onclick={() => (confirmFood = food)}
+								title="Eliminar"
+								aria-label="Eliminar"
+							>
+								<Trash2Icon />
+							</Button>
+						</div>
+					</li>
+				{/each}
+			</ul>
+		{/if}
+	</CardContent>
+</Card>
 
-<style>
-	.form {
-		display: flex;
-		flex-direction: column;
-		gap: 10px;
-		margin: 12px 0;
-	}
-
-	.grid {
-		display: grid;
-		grid-template-columns: repeat(2, 1fr);
-		gap: 8px;
-	}
-
-	.food {
-		display: flex;
-		justify-content: space-between;
-		align-items: center;
-		gap: 8px;
-		padding: 10px 0;
-		border-bottom: 1px solid var(--border);
-	}
-
-	.food:last-child {
-		border-bottom: none;
-	}
-
-	.food-info {
-		display: flex;
-		flex-direction: column;
-		gap: 2px;
-	}
-
-	.food-actions {
-		display: flex;
-		gap: 6px;
-		flex-shrink: 0;
-	}
-
-	.saved {
-		margin: 8px 0 0;
-	}
-
-	.search-toggle {
-		margin-top: 12px;
-	}
-</style>
+<ConfirmDialog
+	open={confirmFood !== null}
+	title="Eliminar alimento"
+	message={'¿Eliminar «' + (confirmFood?.name ?? '') + '» de tu base de datos? Esta acción no se puede deshacer.'}
+	onConfirm={async () => {
+		if (confirmFood) await remove(confirmFood);
+	}}
+	onClose={() => (confirmFood = null)}
+/>

@@ -1,4 +1,7 @@
 <script lang="ts">
+	import * as Dialog from '$lib/components/ui/dialog';
+	import { Button } from '$lib/components/ui/button';
+
 	interface Props {
 		open: boolean;
 		title: string;
@@ -8,61 +11,25 @@
 		onClose?: () => void;
 	}
 	let { open, title, message, confirmLabel = 'Eliminar', onConfirm, onClose }: Props = $props();
-	let dialog: HTMLDialogElement;
-
-	$effect(() => {
-		if (!dialog) return;
-		if (open && !dialog.open) dialog.showModal();
-		else if (!open && dialog.open) dialog.close();
-	});
-
-	function close() {
-		dialog.close();
-		onClose?.();
-	}
 
 	function confirm() {
 		onConfirm?.();
-		close();
+		onClose?.();
 	}
 </script>
 
-<dialog bind:this={dialog} onclose={onClose}>
-	<h3>{title}</h3>
-	<p>{message}</p>
-	<div class="actions">
-		<button class="secondary" onclick={close}>Cancelar</button>
-		<button class="danger" onclick={confirm}>{confirmLabel}</button>
-	</div>
-</dialog>
-
-<style>
-	dialog {
-		border: none;
-		border-radius: 12px;
-		background: var(--panel);
-		color: var(--text);
-		padding: 20px;
-		max-width: 320px;
-	}
-
-	dialog::backdrop {
-		background: rgb(0 0 0 / 0.55);
-	}
-
-	dialog h3 {
-		margin: 0 0 8px;
-	}
-
-	dialog p {
-		margin: 0;
-		color: var(--muted);
-	}
-
-	.actions {
-		display: flex;
-		justify-content: flex-end;
-		gap: 8px;
-		margin-top: 16px;
-	}
-</style>
+<Dialog.Root
+	bind:open
+	onOpenChange={(o) => {
+		if (!o) onClose?.();
+	}}
+>
+	<Dialog.Content showCloseButton={false} class="max-w-[320px]">
+		<Dialog.Title>{title}</Dialog.Title>
+		<Dialog.Description>{message}</Dialog.Description>
+		<div class="mt-2 flex justify-end gap-2">
+			<Button variant="outline" onclick={onClose}>Cancelar</Button>
+			<Button variant="destructive" onclick={confirm}>{confirmLabel}</Button>
+		</div>
+	</Dialog.Content>
+</Dialog.Root>

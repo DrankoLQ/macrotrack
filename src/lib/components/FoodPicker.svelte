@@ -1,6 +1,11 @@
 <script lang="ts">
 	import { db, type Food, type MealType, MEAL_TYPES, suggestMealType } from '$lib/db';
 	import { fmt } from '$lib/format';
+	import { Input } from '$lib/components/ui/input';
+	import { Button } from '$lib/components/ui/button';
+	import { Label } from '$lib/components/ui/label';
+	import * as Select from '$lib/components/ui/select';
+	import { Select as SelectPrimitive } from 'bits-ui';
 
 	let { onAdd }: { onAdd: (food: Food, grams: number, mealType: MealType) => void } = $props();
 
@@ -40,97 +45,52 @@
 	}
 </script>
 
-<div class="picker">
-	<input type="search" placeholder="Buscar alimento…" bind:value={query} />
+<div class="flex flex-col gap-2">
+	<Input type="search" placeholder="Buscar alimento…" bind:value={query} />
 	{#if results.length > 0}
-		<ul class="results">
+		<ul class="flex flex-col gap-1">
 			{#each results as food (food.id)}
 				<li>
-					<button class="row-btn" onclick={() => pick(food)}>
-						<span>
+					<Button variant="ghost" class="w-full justify-between font-normal" onclick={() => pick(food)}>
+						<span class="truncate">
 							{food.name}
-							{#if food.brand}<small class="muted"> · {food.brand}</small>{/if}
+							{#if food.brand}<span class="text-xs text-muted-foreground"> · {food.brand}</span>{/if}
 						</span>
-						<small>{fmt(food.kcal)} kcal / {food.base}g</small>
-					</button>
+						<span class="shrink-0 text-xs text-muted-foreground">{fmt(food.kcal)} kcal / {food.base}g</span>
+					</Button>
 				</li>
 			{/each}
 		</ul>
 	{/if}
 	{#if selected}
-		<div class="card selected-card">
-			<div class="row sel-head">
-				<strong>
+		<div class="flex flex-col gap-2.5 rounded-lg border border-border bg-card p-3">
+			<div class="flex items-center justify-between gap-2">
+				<strong class="truncate text-sm">
 					{selected.name}
-					{#if selected.brand}<small class="muted"> · {selected.brand}</small>{/if}
+					{#if selected.brand}<span class="text-xs text-muted-foreground"> · {selected.brand}</span>{/if}
 				</strong>
-				<small class="muted">{fmt(selected.kcal)} kcal / {selected.base}g</small>
+				<small class="shrink-0 text-muted-foreground">{fmt(selected.kcal)} kcal / {selected.base}g</small>
 			</div>
-			<div class="row">
-				<label>Gramos<input type="number" min="1" bind:value={grams} inputmode="decimal" /></label>
-				<label class="type-label">Tipo
-					<select bind:value={mealType}>
-						{#each MEAL_TYPES as type}
-							<option value={type.key}>{type.label}</option>
-						{/each}
-					</select>
-				</label>
-				<button onclick={add}>Añadir</button>
+			<div class="flex items-end gap-2">
+				<div class="min-w-0 flex-1">
+					<Label class="mb-1 block">Gramos</Label>
+					<Input type="number" min="1" bind:value={grams} inputmode="decimal" />
+				</div>
+				<div class="min-w-0 flex-1">
+					<Label class="mb-1 block">Tipo</Label>
+					<Select.Root bind:value={mealType}>
+						<Select.Trigger class="w-full">
+							<SelectPrimitive.Value placeholder="Tipo" />
+						</Select.Trigger>
+						<Select.Content>
+							{#each MEAL_TYPES as type}
+								<Select.Item value={type.key}>{type.label}</Select.Item>
+							{/each}
+						</Select.Content>
+					</Select.Root>
+				</div>
+				<Button onclick={add}>Añadir</Button>
 			</div>
 		</div>
 	{/if}
 </div>
-
-<style>
-	.picker {
-		display: flex;
-		flex-direction: column;
-		gap: 8px;
-	}
-
-	.results {
-		display: flex;
-		flex-direction: column;
-		gap: 4px;
-	}
-
-	.row-btn {
-		display: flex;
-		justify-content: space-between;
-		width: 100%;
-		background: var(--bg);
-		color: var(--text);
-		font-weight: 400;
-		padding: 10px 12px;
-		text-align: left;
-	}
-
-	.row-btn small {
-		color: var(--muted);
-	}
-
-	.selected-card {
-		display: flex;
-		flex-direction: column;
-		gap: 10px;
-	}
-
-	.sel-head {
-		justify-content: space-between;
-	}
-
-	select {
-		font-family: inherit;
-		font-size: 16px;
-		background: var(--bg);
-		color: var(--text);
-		border: 1px solid var(--border);
-		border-radius: 8px;
-		padding: 8px 10px;
-		width: 100%;
-	}
-
-	.type-label {
-		min-width: 120px;
-	}
-</style>

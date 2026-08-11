@@ -30,63 +30,34 @@
 {#if profileReady && !profile.value}
 	<Onboarding />
 {:else}
-	<div class="shell">
-		<header>
-			<strong class="logo">MacroTrack</strong>
-			<nav>
-				<a href="/" class:active={page.url.pathname === '/'}>Diario</a>
-				<a href="/foods" class:active={page.url.pathname === '/foods'}>Alimentos</a>
-				<a href="/scan" class:active={page.url.pathname === '/scan'}>Escanear</a>
+	<div class="mx-auto flex max-w-[640px] flex-col gap-4 p-4">
+		<header class="flex items-center justify-between">
+			<strong class="text-lg font-bold">MacroTrack</strong>
+			<nav class="flex gap-0.5 rounded-xl border border-border bg-card p-1">
+				<a
+					href="/"
+					class:active={page.url.pathname === '/'}
+					class="rounded-lg px-2.5 py-1.5 text-xs font-semibold text-muted-foreground no-underline transition-colors hover:text-foreground"
+				>Diario</a>
+				<a
+					href="/foods"
+					class:active={page.url.pathname === '/foods'}
+					class="rounded-lg px-2.5 py-1.5 text-xs font-semibold text-muted-foreground no-underline transition-colors hover:text-foreground"
+				>Alimentos</a>
+				<a
+					href="/scan"
+					class:active={page.url.pathname === '/scan'}
+					class="rounded-lg px-2.5 py-1.5 text-xs font-semibold text-muted-foreground no-underline transition-colors hover:text-foreground"
+				>Escanear</a>
 			</nav>
 		</header>
-		<main>{@render children()}</main>
+		<main class="flex flex-col gap-4">{@render children()}</main>
 	</div>
 {/if}
 
 <style>
-	.shell {
-		max-width: 640px;
-		margin: 0 auto;
-		padding: 16px;
-	}
-
-	header {
-		display: flex;
-		align-items: center;
-		justify-content: space-between;
-		margin-bottom: 16px;
-	}
-
-	.logo {
-		font-size: 1.1rem;
-	}
-
-	nav {
-		display: flex;
-		gap: 4px;
-		background: var(--panel);
-		border: 1px solid var(--border);
-		border-radius: 10px;
-		padding: 4px;
-	}
-
-	nav a {
-		color: var(--muted);
-		text-decoration: none;
-		font-size: 0.85rem;
-		font-weight: 600;
-		padding: 6px 10px;
-		border-radius: 8px;
-	}
-
 	nav a.active {
-		background: var(--panel-2);
-		color: var(--text);
-	}
-
-	main {
-		display: flex;
-		flex-direction: column;
-		gap: 16px;
+		background: var(--secondary);
+		color: var(--foreground);
 	}
 </style>

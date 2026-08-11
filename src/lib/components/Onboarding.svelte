@@ -9,6 +9,12 @@
 		type Sex
 	} from '$lib/stores.svelte';
 	import { fmt } from '$lib/format';
+	import { Card, CardContent } from '$lib/components/ui/card';
+	import { Input } from '$lib/components/ui/input';
+	import { Label } from '$lib/components/ui/label';
+	import { Button } from '$lib/components/ui/button';
+	import * as Select from '$lib/components/ui/select';
+	import { Select as SelectPrimitive } from 'bits-ui';
 
 	const SEX_LABELS: { key: Sex; label: string }[] = [
 		{ key: 'male', label: 'Hombre' },
@@ -58,112 +64,81 @@
 	}
 </script>
 
-<div class="onboarding">
-	<div class="card panel">
-		<h1>Bienvenido a MacroTrack</h1>
-		<p class="muted intro">Cuéntanos un poco sobre ti y calcularemos tus objetivos diarios.</p>
-		<div class="form">
-			<div class="grid3">
-				<label>Altura (cm)<input type="number" min="100" max="250" bind:value={form.height} placeholder="Ej: 175" inputmode="numeric" /></label>
-				<label>Peso (kg)<input type="number" min="30" max="250" bind:value={form.weight} placeholder="Ej: 70" inputmode="decimal" /></label>
-				<label>Edad<input type="number" min="10" max="120" bind:value={form.age} placeholder="Ej: 30" inputmode="numeric" /></label>
-			</div>
-			<label>Sexo
-				<select bind:value={form.sex}>
-					{#each SEX_LABELS as option}
-						<option value={option.key}>{option.label}</option>
-					{/each}
-				</select>
-			</label>
-			<label>Nivel de actividad
-				<select bind:value={form.activity}>
-					{#each ACTIVITY_LABELS as option}
-						<option value={option.key}>{option.label}</option>
-					{/each}
-				</select>
-			</label>
-			<label>Objetivo
-				<select bind:value={form.goal}>
-					{#each GOAL_LABELS as option}
-						<option value={option.key}>{option.label} ({option.note})</option>
-					{/each}
-				</select>
-			</label>
-			{#if preview}
-				<div class="card preview">
-					<strong>Objetivos diarios estimados</strong>
-					<ul>
-						<li><span>Calorías</span><span>{fmt(preview.kcal)} kcal</span></li>
-						<li><span>Proteínas</span><span>{fmt(preview.protein)} g</span></li>
-						<li><span>Hidratos</span><span>{fmt(preview.carbs)} g</span></li>
-						<li><span>Grasas</span><span>{fmt(preview.fat)} g</span></li>
-						<li><span>Fibra</span><span>{fmt(preview.fiber)} g</span></li>
-					</ul>
+<div class="flex min-h-dvh items-center justify-center p-4">
+	<Card class="w-full max-w-[440px]">
+		<CardContent>
+			<h1 class="text-xl font-bold">Bienvenido a MacroTrack</h1>
+			<p class="mt-2 text-sm text-muted-foreground">Cuéntanos un poco sobre ti y calcularemos tus objetivos diarios.</p>
+			<div class="mt-4 flex flex-col gap-3">
+				<div class="grid grid-cols-3 gap-2">
+					<div>
+						<Label class="mb-1 block">Altura (cm)</Label>
+						<Input type="number" min="100" max="250" bind:value={form.height} placeholder="Ej: 175" inputmode="numeric" />
+					</div>
+					<div>
+						<Label class="mb-1 block">Peso (kg)</Label>
+						<Input type="number" min="30" max="250" bind:value={form.weight} placeholder="Ej: 70" inputmode="decimal" />
+					</div>
+					<div>
+						<Label class="mb-1 block">Edad</Label>
+						<Input type="number" min="10" max="120" bind:value={form.age} placeholder="Ej: 30" inputmode="numeric" />
+					</div>
 				</div>
-			{:else}
-				<p class="muted">Rellena altura, peso y edad para ver tu estimación (Harris-Benedict revisada).</p>
-			{/if}
-			<button onclick={submit} disabled={!preview}>Calcular mis objetivos</button>
-		</div>
-	</div>
+				<div>
+					<Label class="mb-1 block">Sexo</Label>
+					<Select.Root bind:value={form.sex} items={SEX_LABELS.map((o) => ({ value: o.key, label: o.label }))}>
+						<Select.Trigger class="w-full">
+							<SelectPrimitive.Value placeholder="Sexo" />
+						</Select.Trigger>
+						<Select.Content>
+							{#each SEX_LABELS as option}
+								<Select.Item value={option.key} label={option.label}>{option.label}</Select.Item>
+							{/each}
+						</Select.Content>
+					</Select.Root>
+				</div>
+				<div>
+					<Label class="mb-1 block">Nivel de actividad</Label>
+					<Select.Root bind:value={form.activity} items={ACTIVITY_LABELS.map((o) => ({ value: o.key, label: o.label }))}>
+						<Select.Trigger class="w-full">
+							<SelectPrimitive.Value placeholder="Nivel de actividad" />
+						</Select.Trigger>
+						<Select.Content>
+							{#each ACTIVITY_LABELS as option}
+								<Select.Item value={option.key} label={option.label}>{option.label}</Select.Item>
+							{/each}
+						</Select.Content>
+					</Select.Root>
+				</div>
+				<div>
+					<Label class="mb-1 block">Objetivo</Label>
+					<Select.Root bind:value={form.goal} items={GOAL_LABELS.map((o) => ({ value: o.key, label: o.label + ' (' + o.note + ')' }))}>
+						<Select.Trigger class="w-full">
+							<SelectPrimitive.Value placeholder="Objetivo" />
+						</Select.Trigger>
+						<Select.Content>
+							{#each GOAL_LABELS as option}
+								<Select.Item value={option.key} label={option.label + ' (' + option.note + ')'}>{option.label} ({option.note})</Select.Item>
+							{/each}
+						</Select.Content>
+					</Select.Root>
+				</div>
+				{#if preview}
+					<div class="rounded-lg bg-secondary p-3">
+						<strong class="text-sm">Objetivos diarios estimados</strong>
+						<ul class="mt-2 flex flex-col gap-1 text-sm">
+							<li class="flex justify-between"><span>Calorías</span><span>{fmt(preview.kcal)} kcal</span></li>
+							<li class="flex justify-between"><span>Proteínas</span><span>{fmt(preview.protein)} g</span></li>
+							<li class="flex justify-between"><span>Hidratos</span><span>{fmt(preview.carbs)} g</span></li>
+							<li class="flex justify-between"><span>Grasas</span><span>{fmt(preview.fat)} g</span></li>
+							<li class="flex justify-between"><span>Fibra</span><span>{fmt(preview.fiber)} g</span></li>
+						</ul>
+					</div>
+				{:else}
+					<p class="text-sm text-muted-foreground">Rellena altura, peso y edad para ver tu estimación (Harris-Benedict revisada).</p>
+				{/if}
+				<Button onclick={submit} disabled={!preview}>Calcular mis objetivos</Button>
+			</div>
+		</CardContent>
+	</Card>
 </div>
-
-<style>
-	.onboarding {
-		min-height: 100dvh;
-		display: flex;
-		align-items: center;
-		justify-content: center;
-		padding: 16px;
-	}
-
-	.panel {
-		width: 100%;
-		max-width: 440px;
-	}
-
-	.intro {
-		margin: 8px 0 0;
-	}
-
-	.form {
-		display: flex;
-		flex-direction: column;
-		gap: 12px;
-		margin-top: 16px;
-	}
-
-	.grid3 {
-		display: grid;
-		grid-template-columns: repeat(3, 1fr);
-		gap: 8px;
-	}
-
-	select {
-		font-family: inherit;
-		font-size: 16px;
-		background: var(--bg);
-		color: var(--text);
-		border: 1px solid var(--border);
-		border-radius: 8px;
-		padding: 8px 10px;
-		width: 100%;
-	}
-
-	.preview {
-		background: var(--panel-2);
-	}
-
-	.preview ul {
-		margin-top: 8px;
-		display: flex;
-		flex-direction: column;
-		gap: 4px;
-	}
-
-	.preview li {
-		display: flex;
-		justify-content: space-between;
-		font-size: 0.9rem;
-	}
-</style>
