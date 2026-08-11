@@ -1,6 +1,12 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
-	import { diary, goals, saveGoals, today } from '$lib/stores.svelte';
+	import { diary, goals, today, profile, saveGoals, saveProfile } from '$lib/stores.svelte';
+	import {
+		computeGoals,
+		type ActivityLevel,
+		type Goal,
+		type Sex
+	} from '$lib/stores.svelte';
 	import { fmt } from '$lib/format';
 	import { MEAL_TYPES, type Entry, type MealType } from '$lib/db';
 	import MacroBar from '$lib/components/MacroBar.svelte';
@@ -24,6 +30,70 @@
 		{ key: 'fat', label: 'Grasas', unit: 'g' },
 		{ key: 'fiber', label: 'Fibra', unit: 'g' }
 	] as const;
+
+	const SEX_OPTIONS: { key: Sex; label: string }[] = [
+		{ key: 'male', label: 'Hombre' },
+		{ key: 'female', label: 'Mujer' }
+	];
+
+	const ACTIVITY_OPTIONS: { key: ActivityLevel; label: string }[] = [
+		{ key: 'sedentary', label: 'Sedentario (poco ejercicio)' },
+		{ key: 'light', label: 'Ligero (1–2 días/semana)' },
+		{ key: 'moderate', label: 'Moderado (3–4 días/semana)' },
+		{ key: 'active', label: 'Intenso (5+ días/semana)' }
+	];
+
+	const GOAL_OPTIONS: { key: Goal; label: string }[] = [
+		{ key: 'lose', label: 'Perder grasa (−400 kcal)' },
+		{ key: 'recomp', label: 'Recomposición (−250 kcal)' },
+		{ key: 'maintain', label: 'Mantener (sin ajuste)' },
+		{ key: 'gain', label: 'Ganar músculo (+250 kcal)' }
+	];
+
+	const pform = $state({
+		height: '',
+		weight: '',
+		age: '',
+		sex: 'male' as Sex,
+		activity: 'moderate' as ActivityLevel,
+		goal: 'recomp' as Goal
+	});
+
+	$effect(() => {
+		const p = profile.value;
+		if (p && pform.height === '') {
+			Object.assign(pform, {
+				height: String(p.height),
+				weight: String(p.weight),
+				age: String(p.age),
+				sex: p.sex,
+				activity: p.activity,
+				goal: p.goal
+			});
+		}
+	});
+
+	const profileTotals = $derived.by(() => {
+		const height = parseFloat(pform.height);
+		const weight = parseFloat(pform.weight);
+		const age = parseFloat(pform.age);
+		if (!height || !weight || !age) return null;
+		return computeGoals({ height, weight, age, sex: pform.sex, activity: pform.activity, goal: pform.goal });
+	});
+
+	$effect(() => {
+		if (!profileTotals) return;
+		Object.assign(goals, profileTotals);
+		saveGoals();
+		saveProfile({
+			height: parseFloat(pform.height),
+			weight: parseFloat(pform.weight),
+			age: parseFloat(pform.age),
+			sex: pform.sex,
+			activity: pform.activity,
+			goal: pform.goal
+		});
+	});
 
 	const dateLabel = $derived(
 		new Date(diary.date + 'T12:00:00').toLocaleDateString('es-ES', {
@@ -115,14 +185,68 @@
 			{/each}
 		</div>
 		<details class="mt-3">
-			<summary class="cursor-pointer text-xs font-medium text-muted-foreground select-none">Objetivos</summary>
-			<div class="mt-2 grid grid-cols-2 gap-2">
-				{#each macros as macro}
+			<summary class="cursor-pointer text-xs font-medium text-muted-foreground select-none">Perfil</summary>
+			<div class="mt-2 flex flex-col gap-2.5">
+				<div class="grid grid-cols-3 gap-2">
 					<div>
-						<Label class="mb-1 block">{macro.label}</Label>
-						<Input type="number" bind:value={goals[macro.key]} onchange={saveGoals} inputmode="decimal" />
+						<Label class="mb-1 block">Altura (cm)</Label>
+						<Input type="number" min="100" max="250" bind:value={pform.height} inputmode="numeric" />
 					</div>
-				{/each}
+					<div>
+						<Label class="mb-1 block">Peso (kg)</Label>
+						<Input type="number" min="30" max="250" bind:value={pform.weight} inputmode="decimal" />
+					</div>
+					<div>
+						<Label class="mb-1 block">Edad</Label>
+						<Input type="number" min="10" max="120" bind:value={pform.age} inputmode="numeric" />
+					</div>
+				</div>
+				<div>
+					<Label class="mb-1 block">Sexo</Label>
+					<Select.Root bind:value={pform.sex} items={SEX_OPTIONS.map((o) => ({ value: o.key, label: o.label }))}>
+						<Select.Trigger class="w-full">
+							<SelectPrimitive.Value placeholder="Sexo" />
+						</Select.Trigger>
+						<Select.Content>
+							{#each SEX_OPTIONS as option}
+								<Select.Item value={option.key} label={option.label}>{option.label}</Select.Item>
+							{/each}
+						</Select.Content>
+					</Select.Root>
+				</div>
+				<div>
+					<Label class="mb-1 block">Nivel de actividad</Label>
+					<Select.Root bind:value={pform.activity} items={ACTIVITY_OPTIONS.map((o) => ({ value: o.key, label: o.label }))}>
+						<Select.Trigger class="w-full">
+							<SelectPrimitive.Value placeholder="Nivel de actividad" />
+						</Select.Trigger>
+						<Select.Content>
+							{#each ACTIVITY_OPTIONS as option}
+								<Select.Item value={option.key} label={option.label}>{option.label}</Select.Item>
+							{/each}
+						</Select.Content>
+					</Select.Root>
+				</div>
+				<div>
+					<Label class="mb-1 block">Objetivo</Label>
+					<Select.Root bind:value={pform.goal} items={GOAL_OPTIONS.map((o) => ({ value: o.key, label: o.label }))}>
+						<Select.Trigger class="w-full">
+							<SelectPrimitive.Value placeholder="Objetivo" />
+						</Select.Trigger>
+						<Select.Content>
+							{#each GOAL_OPTIONS as option}
+								<Select.Item value={option.key} label={option.label}>{option.label}</Select.Item>
+							{/each}
+						</Select.Content>
+					</Select.Root>
+				</div>
+				{#if profileTotals}
+					<p class="text-xs text-muted-foreground">
+						Objetivos calculados: {fmt(profileTotals.kcal)} kcal · P {fmt(profileTotals.protein)} · C {fmt(profileTotals.carbs)} · G {fmt(profileTotals.fat)} · F {fmt(profileTotals.fiber)}
+					</p>
+				{:else}
+					<p class="text-xs text-muted-foreground">Rellena altura, peso y edad para calcular tus objetivos (Harris-Benedict).</p>
+				{/if}
 			</div>
 		</details>
 	</CardContent>
