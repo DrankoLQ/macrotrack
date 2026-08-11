@@ -5,6 +5,7 @@
 	import { MEAL_TYPES, type Entry, type MealType } from '$lib/db';
 	import MacroBar from '$lib/components/MacroBar.svelte';
 	import FoodPicker from '$lib/components/FoodPicker.svelte';
+	import ConfirmDialog from '$lib/components/ConfirmDialog.svelte';
 
 	const macros = [
 		{ key: 'kcal', label: 'Calorías', unit: 'kcal' },
@@ -43,6 +44,7 @@
 	let editingId = $state<number | null>(null);
 	let editGrams = $state('100');
 	let editType = $state<MealType>('comida');
+	let confirmEntry = $state<Entry | null>(null);
 
 	function startEdit(entry: Entry) {
 		editingId = entry.id!;
@@ -140,7 +142,7 @@
 								</div>
 								<div class="row">
 									<button class="secondary icon-btn" onclick={() => startEdit(entry)} title="Editar">✎</button>
-									<button class="danger" onclick={() => diary.remove(entry.id!)}>✕</button>
+									<button class="danger" onclick={() => (confirmEntry = entry)}>✕</button>
 								</div>
 							{/if}
 						</li>
@@ -150,6 +152,16 @@
 		{/each}
 	{/if}
 </section>
+
+<ConfirmDialog
+	open={confirmEntry !== null}
+	title="Eliminar comida"
+	message={'¿Eliminar «' + (confirmEntry?.name ?? '') + '» (' + (confirmEntry?.grams ?? '') + ' g) del diario? Esta acción no se puede deshacer.'}
+	onConfirm={() => {
+		if (confirmEntry?.id !== undefined) diary.remove(confirmEntry.id);
+	}}
+	onClose={() => (confirmEntry = null)}
+/>
 
 <style>
 	.date-row {

@@ -3,6 +3,7 @@
 	import { db, type Food } from '$lib/db';
 	import { fmt } from '$lib/format';
 	import { searchProducts, type OffSearchResult } from '$lib/openfoodfacts';
+import ConfirmDialog from '$lib/components/ConfirmDialog.svelte';
 
 	let foods: Food[] = $state([]);
 	let query = $state('');
@@ -16,6 +17,7 @@
 	let offError = $state('');
 	let offResults = $state<OffSearchResult[]>([]);
 	let savedOff = $state<Set<number>>(new Set());
+	let confirmFood = $state<Food | null>(null);
 	const form = $state({
 		name: '',
 		brand: '',
@@ -239,12 +241,21 @@
 					</div>
 					<div class="food-actions">
 						<button class="secondary icon-btn" onclick={() => edit(food)} title="Editar">✏️</button>
-						<button class="danger" onclick={() => remove(food)}>✕</button>
+						<button class="danger" onclick={() => (confirmFood = food)}>✕</button>
 					</div>
 				</li>
 			{/each}
 		</ul>
 	{/if}
+	<ConfirmDialog
+		open={confirmFood !== null}
+		title="Eliminar alimento"
+		message={'¿Eliminar «' + (confirmFood?.name ?? '') + '» de tu base de datos? Esta acción no se puede deshacer.'}
+		onConfirm={async () => {
+			if (confirmFood) await remove(confirmFood);
+		}}
+		onClose={() => (confirmFood = null)}
+	/>
 </section>
 
 <style>
