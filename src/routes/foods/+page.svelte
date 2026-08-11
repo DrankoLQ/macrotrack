@@ -3,11 +3,6 @@
 	import { db, type Food } from '$lib/db';
 	import { fmt } from '$lib/format';
 	import { searchProducts, type OffSearchResult } from '$lib/openfoodfacts';
-	import { searchUsda, type UsdaSearchResult } from '$lib/usda';
-
-	type SearchResult = OffSearchResult | UsdaSearchResult;
-
-	const USDA_KEY = 'macrotrack:usdaKey';
 
 	let foods: Food[] = $state([]);
 	let query = $state('');
@@ -17,10 +12,8 @@
 	let offQuery = $state('');
 	let offLoading = $state(false);
 	let offError = $state('');
-	let offResults = $state<SearchResult[]>([]);
+	let offResults = $state<OffSearchResult[]>([]);
 	let savedOff = $state<Set<number>>(new Set());
-	let usdaKey = $state((typeof localStorage !== 'undefined' ? localStorage.getItem(USDA_KEY) : null) ?? '');
-	let usdaKeyInput = $state('');
 	const form = $state({
 		name: '',
 		brand: '',
@@ -88,38 +81,15 @@
 		offError = '';
 		offResults = [];
 		try {
-			const results = await searchProducts(q);
-			if (results.length > 0) {
-				offResults = results;
-			} else if (usdaKey) {
-				offResults = await searchUsda(q, usdaKey);
-			} else {
-				offError = 'Sin resultados en OpenFoodFacts. Añade tu key gratuita de USDA (plan B) para buscar también ahí.';
-			}
+			offResults = await searchProducts(q);
 		} catch (error) {
-			const offMsg = error instanceof Error ? error.message : 'Error de red';
-			if (usdaKey) {
-				try {
-					offResults = await searchUsda(q, usdaKey);
-				} catch (usdaError) {
-					offError = `OpenFoodFacts: ${offMsg} · USDA: ${usdaError instanceof Error ? usdaError.message : 'error'}`;
-				}
-			} else {
-				offError = `${offMsg} — Plan B: consigue tu key gratuita de USDA (abajo) para poder seguir buscando.`;
-			}
+			offError = error instanceof Error ? error.message : 'Error de red';
 		} finally {
 			offLoading = false;
 		}
 	}
 
-	function saveUsdaKey() {
-		const key = usdaKeyInput.trim();
-		localStorage.setItem(USDA_KEY, key);
-		usdaKey = key;
-		usdaKeyInput = '';
-	}
-
-	async function saveOffResult(result: SearchResult, index: number) {
+	async function saveOffResult(result: OffSearchResult, index: number) {
 		try {
 			await db.foods.add({
 				name: result.name,
@@ -146,6 +116,9 @@
 	<h2>Base de datos</h2>
 	<div class="row">
 		<input type="search" placeholder="Buscar por nombre o código…" bind:value={query} />
+		{#if query}
+			<button class="secondary icon-btn" onclick={() => (query = '')} title="Limpiar búsqueda">✕</button>
+		{/if}
 		<button class="secondary" onclick={() => (showForm = !showForm)}>
 			{showForm ? 'Cancelar' : 'Nuevo alimento'}
 		</button>
@@ -168,7 +141,7 @@
 			<button onclick={add}>Guardar</button>
 		</div>
 	{/if}
-	<button class="secondary" onclick={() => (searchOff = !searchOff)}>
+	<button class="secondary search-toggle" onclick={() => (searchOff = !searchOff)}>
 		{searchOff ? 'Cerrar búsqueda' : 'Buscar alimentos por nombre (OpenFoodFacts)'}
 	</button>
 	{#if searchOff}
@@ -179,18 +152,6 @@
 					{offLoading ? 'Buscando…' : 'Buscar'}
 				</button>
 			</div>
-			{#if usdaKey}
-				<p class="muted key-hint">Plan B (USDA) activo ✓ — si OpenFoodFacts falla, se busca en la base de datos oficial de EEUU.</p>
-			{:else}
-				<p class="muted key-hint">
-					¿OpenFoodFacts no responde? Activa el plan B con una key gratuita de USDA:
-					<a href="https://fdc.nal.usda.gov/api-key-signup.html" target="_blank" rel="noreferrer">consíguela aquí</a>.
-				</p>
-				<div class="row">
-					<input bind:value={usdaKeyInput} placeholder="API key de USDA" />
-					<button class="secondary" onclick={saveUsdaKey} disabled={!usdaKeyInput.trim()}>Guardar</button>
-				</div>
-			{/if}
 			{#if offError}<p class="error">{offError}</p>{/if}
 			{#if offResults.length > 0}
 				<ul>
@@ -202,9 +163,9 @@
 									{#if result.brand}<span>{result.brand} · </span>{/if}
 									{#if result.barcode}<span>{result.barcode} · </span>{/if}
 									{#if result.hasNutriments}
-										{fmt(result.kcal)} kcal · P {fmt(result.protein)} · C {fmt(result.carbs)} · G {fmt(result.fat)} · F {fmt(result.fiber)} / 100g · {result.source === 'usda' ? 'USDA' : 'OpenFoodFacts'}
+										{fmt(result.kcal)} kcal · P {fmt(result.protein)} · C {fmt(result.carbs)} · G {fmt(result.fat)} · F {fmt(result.fiber)} / 100g
 									{:else}
-										sin datos nutricionales · {result.source === 'usda' ? 'USDA' : 'OpenFoodFacts'}
+										sin datos nutricionales
 									{/if}
 								</small>
 							</div>
@@ -283,11 +244,7 @@
 		margin: 8px 0 0;
 	}
 
-	.key-hint {
-		margin: 0;
-	}
-
-	a {
-		color: var(--accent);
+	.search-toggle {
+		margin-top: 12px;
 	}
 </style>
