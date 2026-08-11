@@ -4,13 +4,18 @@
 	import favicon from '$lib/assets/favicon.svg';
 	import '../app.css';
 	import { seedIfNeeded } from '$lib/seed';
-	import { loadGoals } from '$lib/stores.svelte';
+	import { loadGoals, loadProfile, profile } from '$lib/stores.svelte';
+	import Onboarding from '$lib/components/Onboarding.svelte';
 
 	let { children } = $props();
 
+	let profileReady = $state(false);
+
 	onMount(() => {
 		seedIfNeeded();
+		loadProfile();
 		loadGoals();
+		profileReady = true;
 		if ('serviceWorker' in navigator) {
 			navigator.serviceWorker.register('/service-worker.js');
 		}
@@ -22,17 +27,21 @@
 	<link rel="icon" href={favicon} />
 </svelte:head>
 
-<div class="shell">
-	<header>
-		<strong class="logo">MacroTrack</strong>
-		<nav>
-			<a href="/" class:active={page.url.pathname === '/'}>Diario</a>
-			<a href="/foods" class:active={page.url.pathname === '/foods'}>Alimentos</a>
-			<a href="/scan" class:active={page.url.pathname === '/scan'}>Escanear</a>
-		</nav>
-	</header>
-	<main>{@render children()}</main>
-</div>
+{#if profileReady && !profile.value}
+	<Onboarding />
+{:else}
+	<div class="shell">
+		<header>
+			<strong class="logo">MacroTrack</strong>
+			<nav>
+				<a href="/" class:active={page.url.pathname === '/'}>Diario</a>
+				<a href="/foods" class:active={page.url.pathname === '/foods'}>Alimentos</a>
+				<a href="/scan" class:active={page.url.pathname === '/scan'}>Escanear</a>
+			</nav>
+		</header>
+		<main>{@render children()}</main>
+	</div>
+{/if}
 
 <style>
 	.shell {

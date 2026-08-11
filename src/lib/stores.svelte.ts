@@ -29,6 +29,68 @@ export interface Totals {
 	fiber: number;
 }
 
+export type Sex = 'male' | 'female';
+
+export type ActivityLevel = 'sedentary' | 'light' | 'moderate' | 'active';
+
+export type Goal = 'lose' | 'recomp' | 'maintain' | 'gain';
+
+export interface Profile {
+	height: number;
+	weight: number;
+	age: number;
+	sex: Sex;
+	activity: ActivityLevel;
+	goal: Goal;
+}
+
+export const ACTIVITY_FACTORS: Record<ActivityLevel, number> = {
+	sedentary: 1.2,
+	light: 1.375,
+	moderate: 1.55,
+	active: 1.725
+};
+
+export const GOAL_ADJUSTMENTS: Record<Goal, number> = {
+	lose: -400,
+	recomp: -250,
+	maintain: 0,
+	gain: 250
+};
+
+const PROFILE_KEY = 'macrotrack:profile';
+
+export const profile = $state<{ value: Profile | null }>({ value: null });
+
+export function loadProfile() {
+	try {
+		const raw = localStorage.getItem(PROFILE_KEY);
+		if (raw) {
+			const parsed = JSON.parse(raw);
+			if (parsed && typeof parsed.height === 'number') profile.value = { goal: 'recomp', ...parsed };
+		}
+	} catch {
+		// sin perfil guardado
+	}
+}
+
+export function saveProfile(p: Profile) {
+	profile.value = p;
+	localStorage.setItem(PROFILE_KEY, JSON.stringify(p));
+}
+
+export function computeGoals(p: Profile): Totals {
+	const tmb =
+		p.sex === 'male'
+			? 88.362 + 13.397 * p.weight + 4.799 * p.height - 5.677 * p.age
+			: 447.6 + 9.25 * p.weight + 3.1 * p.height - 4.33 * p.age;
+	const kcal = Math.round(tmb * ACTIVITY_FACTORS[p.activity] + GOAL_ADJUSTMENTS[p.goal ?? 'recomp']);
+	const protein = Math.round(p.weight * 2.1);
+	const fat = Math.round(p.weight * 0.9);
+	const carbs = Math.max(0, Math.round((kcal - protein * 4 - fat * 9) / 4));
+	return { kcal, protein, carbs, fat, fiber: 30 };
+}
+
 function sum(entries: Entry[], key: keyof Totals): number {
 	return entries.reduce((acc, entry) => acc + entry[key], 0);
 }
