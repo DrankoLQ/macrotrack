@@ -8,6 +8,8 @@
 	let query = $state('');
 	let showForm = $state(false);
 	let saved = $state<string | null>(null);
+	let editingId = $state<number | null>(null);
+	let formError = $state('');
 	let searchOff = $state(false);
 	let offQuery = $state('');
 	let offLoading = $state(false);
@@ -51,11 +53,11 @@
 		await refresh();
 	}
 
-	async function add() {
+	async function save() {
 		const toNumber = (value: string) => parseFloat(value) || 0;
 		const name = form.name.trim();
 		if (!name) return;
-		await db.foods.add({
+		const data = {
 			name,
 			brand: form.brand.trim() || undefined,
 			barcode: form.barcode.trim() || undefined,
@@ -64,14 +66,47 @@
 			protein: toNumber(form.protein),
 			carbs: toNumber(form.carbs),
 			fat: toNumber(form.fat),
-			fiber: toNumber(form.fiber),
-			source: 'manual',
-			createdAt: Date.now()
-		});
+			fiber: toNumber(form.fiber)
+		};
+		formError = '';
+		try {
+			if (editingId !== null) {
+				await db.foods.update(editingId, data);
+			} else {
+				await db.foods.add({ ...data, source: 'manual', createdAt: Date.now() });
+			}
+		} catch {
+			formError = 'Ya existe un alimento con ese código de barras';
+			return;
+		}
 		Object.assign(form, { name: '', brand: '', barcode: '', kcal: '', protein: '', carbs: '', fat: '', fiber: '' });
+		editingId = null;
 		showForm = false;
 		saved = name;
 		await refresh();
+	}
+
+	function edit(food: Food) {
+		editingId = food.id ?? null;
+		Object.assign(form, {
+			name: food.name,
+			brand: food.brand ?? '',
+			barcode: food.barcode ?? '',
+			kcal: String(food.kcal),
+			protein: String(food.protein),
+			carbs: String(food.carbs),
+			fat: String(food.fat),
+			fiber: String(food.fiber)
+		});
+		formError = '';
+		showForm = true;
+		window.scrollTo({ top: 0, behavior: 'smooth' });
+	}
+
+	function cancel() {
+		editingId = null;
+		formError = '';
+		showForm = false;
 	}
 
 	async function search() {
@@ -119,7 +154,7 @@
 		{#if query}
 			<button class="secondary icon-btn" onclick={() => (query = '')} title="Limpiar búsqueda">✕</button>
 		{/if}
-		<button class="secondary" onclick={() => (showForm = !showForm)}>
+		<button class="secondary" onclick={() => (showForm ? cancel() : (showForm = true))}>
 			{showForm ? 'Cancelar' : 'Nuevo alimento'}
 		</button>
 	</div>
@@ -128,6 +163,8 @@
 	{/if}
 	{#if showForm}
 		<div class="form">
+			<h3>{editingId !== null ? 'Editar alimento' : 'Nuevo alimento'}</h3>
+			{#if formError}<p class="error">{formError}</p>{/if}
 			<label>Nombre<input bind:value={form.name} placeholder="Ej: Garbanzos cocidos" /></label>
 			<label>Marca<input bind:value={form.brand} placeholder="Opcional" /></label>
 			<label>Código de barras<input bind:value={form.barcode} placeholder="Opcional" inputmode="numeric" /></label>
@@ -138,7 +175,7 @@
 				<label>Grasas / 100g<input type="number" bind:value={form.fat} /></label>
 				<label>Fibra / 100g<input type="number" bind:value={form.fiber} /></label>
 			</div>
-			<button onclick={add}>Guardar</button>
+			<button onclick={save}>{editingId !== null ? 'Guardar cambios' : 'Guardar'}</button>
 		</div>
 	{/if}
 	<button class="secondary search-toggle" onclick={() => (searchOff = !searchOff)}>
@@ -200,7 +237,10 @@
 							{fmt(food.kcal)} kcal · P {fmt(food.protein)} · C {fmt(food.carbs)} · G {fmt(food.fat)} · F {fmt(food.fiber)} / {food.base}g · {food.source}
 						</small>
 					</div>
-					<button class="danger" onclick={() => remove(food)}>✕</button>
+					<div class="food-actions">
+						<button class="secondary icon-btn" onclick={() => edit(food)} title="Editar">✏️</button>
+						<button class="danger" onclick={() => remove(food)}>✕</button>
+					</div>
 				</li>
 			{/each}
 		</ul>
@@ -238,6 +278,12 @@
 		display: flex;
 		flex-direction: column;
 		gap: 2px;
+	}
+
+	.food-actions {
+		display: flex;
+		gap: 6px;
+		flex-shrink: 0;
 	}
 
 	.saved {
