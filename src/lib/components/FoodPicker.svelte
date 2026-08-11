@@ -120,7 +120,8 @@
 	}
 
 	select {
-		font: inherit;
+		font-family: inherit;
+		font-size: 16px;
 		background: var(--bg);
 		color: var(--text);
 		border: 1px solid var(--border);

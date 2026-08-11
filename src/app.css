@@ -64,7 +64,19 @@ button.icon-btn {
 }
 
 input {
-	font: inherit;
+	font-family: inherit;
+	font-size: 16px;
+	background: var(--bg);
+	color: var(--text);
+	border: 1px solid var(--border);
+	border-radius: 8px;
+	padding: 8px 10px;
+	width: 100%;
+}
+
+select {
+	font-family: inherit;
+	font-size: 16px;
 	background: var(--bg);
 	color: var(--text);
 	border: 1px solid var(--border);
