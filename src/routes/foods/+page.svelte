@@ -274,7 +274,7 @@
 							</strong>
 							<small class="text-xs text-muted-foreground">
 								{#if food.barcode}<span>{food.barcode} · </span>{/if}
-								{fmt(food.kcal)} kcal · P {fmt(food.protein)} · C {fmt(food.carbs)} · G {fmt(food.fat)} · F {fmt(food.fiber)} / {food.base}g · {food.source}
+								{fmt(food.kcal)} kcal · P {fmt(food.protein)} · C {fmt(food.carbs)} · G {fmt(food.fat)} · F {fmt(food.fiber)} / {food.base}g{#if food.source !== 'builtin'} · {food.source}{/if}
 							</small>
 						</div>
 						<div class="flex shrink-0 gap-1.5">
