@@ -169,11 +169,11 @@
 			<label>Marca<input bind:value={form.brand} placeholder="Opcional" /></label>
 			<label>Código de barras<input bind:value={form.barcode} placeholder="Opcional" inputmode="numeric" /></label>
 			<div class="grid">
-				<label>kcal / 100g<input type="number" bind:value={form.kcal} /></label>
-				<label>Proteína / 100g<input type="number" bind:value={form.protein} /></label>
-				<label>Hidratos / 100g<input type="number" bind:value={form.carbs} /></label>
-				<label>Grasas / 100g<input type="number" bind:value={form.fat} /></label>
-				<label>Fibra / 100g<input type="number" bind:value={form.fiber} /></label>
+				<label>kcal / 100g<input type="number" bind:value={form.kcal} inputmode="decimal" /></label>
+				<label>Proteína / 100g<input type="number" bind:value={form.protein} inputmode="decimal" /></label>
+				<label>Hidratos / 100g<input type="number" bind:value={form.carbs} inputmode="decimal" /></label>
+				<label>Grasas / 100g<input type="number" bind:value={form.fat} inputmode="decimal" /></label>
+				<label>Fibra / 100g<input type="number" bind:value={form.fiber} inputmode="decimal" /></label>
 			</div>
 			<button onclick={save}>{editingId !== null ? 'Guardar cambios' : 'Guardar'}</button>
 		</div>

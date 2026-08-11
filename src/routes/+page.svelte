@@ -88,7 +88,7 @@
 		<div class="grid goals">
 			{#each macros as macro}
 				<label>{macro.label}
-					<input type="number" bind:value={goals[macro.key]} onchange={saveGoals} />
+					<input type="number" bind:value={goals[macro.key]} onchange={saveGoals} inputmode="decimal" />
 				</label>
 			{/each}
 		</div>
@@ -118,7 +118,7 @@
 						<li class="entry">
 							{#if editingId === entry.id}
 								<div class="row edit-row">
-									<label>Gramos<input type="number" min="1" bind:value={editGrams} /></label>
+									<label>Gramos<input type="number" min="1" bind:value={editGrams} inputmode="decimal" /></label>
 									<label>Tipo
 										<select bind:value={editType}>
 											{#each MEAL_TYPES as type}

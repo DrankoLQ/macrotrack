@@ -67,7 +67,7 @@
 				<small class="muted">{fmt(selected.kcal)} kcal / {selected.base}g</small>
 			</div>
 			<div class="row">
-				<label>Gramos<input type="number" min="1" bind:value={grams} /></label>
+				<label>Gramos<input type="number" min="1" bind:value={grams} inputmode="decimal" /></label>
 				<label class="type-label">Tipo
 					<select bind:value={mealType}>
 						{#each MEAL_TYPES as type}

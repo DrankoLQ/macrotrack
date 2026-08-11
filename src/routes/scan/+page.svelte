@@ -218,7 +218,7 @@
 			Código {code} · {fmt(display.kcal)} kcal · P {fmt(display.protein)} · C {fmt(display.carbs)} · G {fmt(display.fat)} · F {fmt(display.fiber)} / 100g
 		</p>
 		<div class="row">
-			<label>Gramos<input type="number" min="1" bind:value={grams} /></label>
+			<label>Gramos<input type="number" min="1" bind:value={grams} inputmode="decimal" /></label>
 			{#if localFood}
 				<button onclick={addFromLocal}>Añadir al diario</button>
 			{:else}
@@ -242,11 +242,11 @@
 		<label>Nombre<input bind:value={manualName} placeholder="Ej: Galletas de avena" /></label>
 		<label>Marca<input bind:value={manualBrand} placeholder="Ej: Hacendado" /></label>
 		<div class="grid">
-			<label>kcal / 100g<input type="number" bind:value={manual.kcal} /></label>
-			<label>Proteína / 100g<input type="number" bind:value={manual.protein} /></label>
-			<label>Hidratos / 100g<input type="number" bind:value={manual.carbs} /></label>
-			<label>Grasas / 100g<input type="number" bind:value={manual.fat} /></label>
-			<label>Fibra / 100g<input type="number" bind:value={manual.fiber} /></label>
+			<label>kcal / 100g<input type="number" bind:value={manual.kcal} inputmode="decimal" /></label>
+			<label>Proteína / 100g<input type="number" bind:value={manual.protein} inputmode="decimal" /></label>
+			<label>Hidratos / 100g<input type="number" bind:value={manual.carbs} inputmode="decimal" /></label>
+			<label>Grasas / 100g<input type="number" bind:value={manual.fat} inputmode="decimal" /></label>
+			<label>Fibra / 100g<input type="number" bind:value={manual.fiber} inputmode="decimal" /></label>
 		</div>
 		<button onclick={addManual} disabled={!manualName.trim()}>Guardar en base de datos</button>
 	</div>

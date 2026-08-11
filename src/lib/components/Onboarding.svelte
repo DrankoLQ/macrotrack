@@ -64,9 +64,9 @@
 		<p class="muted intro">Cuéntanos un poco sobre ti y calcularemos tus objetivos diarios.</p>
 		<div class="form">
 			<div class="grid3">
-				<label>Altura (cm)<input type="number" min="100" max="250" bind:value={form.height} placeholder="Ej: 175" /></label>
-				<label>Peso (kg)<input type="number" min="30" max="250" bind:value={form.weight} placeholder="Ej: 70" /></label>
-				<label>Edad<input type="number" min="10" max="120" bind:value={form.age} placeholder="Ej: 30" /></label>
+				<label>Altura (cm)<input type="number" min="100" max="250" bind:value={form.height} placeholder="Ej: 175" inputmode="numeric" /></label>
+				<label>Peso (kg)<input type="number" min="30" max="250" bind:value={form.weight} placeholder="Ej: 70" inputmode="decimal" /></label>
+				<label>Edad<input type="number" min="10" max="120" bind:value={form.age} placeholder="Ej: 30" inputmode="numeric" /></label>
 			</div>
 			<label>Sexo
 				<select bind:value={form.sex}>
