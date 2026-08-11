@@ -1,0 +1,74 @@
+export interface Totals {
+	kcal: number;
+	protein: number;
+	carbs: number;
+	fat: number;
+	fiber: number;
+}
+
+export type Sex = 'male' | 'female';
+
+export type ActivityLevel = 'sedentary' | 'light' | 'moderate' | 'active';
+
+export type Goal = 'lose' | 'recomp' | 'maintain' | 'gain';
+
+export interface Profile {
+	height: number;
+	weight: number;
+	age: number;
+	sex: Sex;
+	activity: ActivityLevel;
+	goal: Goal;
+}
+
+export const ACTIVITY_FACTORS: Record<ActivityLevel, number> = {
+	sedentary: 1.2,
+	light: 1.375,
+	moderate: 1.55,
+	active: 1.725
+};
+
+export const GOAL_ADJUSTMENTS: Record<Goal, number> = {
+	lose: -400,
+	recomp: -250,
+	maintain: 0,
+	gain: 250
+};
+
+export function computeGoals(p: Profile): Totals {
+	const tmb =
+		p.sex === 'male'
+			? 88.362 + 13.397 * p.weight + 4.799 * p.height - 5.677 * p.age
+			: 447.6 + 9.25 * p.weight + 3.1 * p.height - 4.33 * p.age;
+	const kcal = Math.round(tmb * ACTIVITY_FACTORS[p.activity] + GOAL_ADJUSTMENTS[p.goal ?? 'recomp']);
+	const protein = Math.round(p.weight * 2.1);
+	const fat = Math.round(p.weight * 0.9);
+	const carbs = Math.max(0, Math.round((kcal - protein * 4 - fat * 9) / 4));
+	return { kcal, protein, carbs, fat, fiber: 30 };
+}
+
+export function foodAtGrams(food: Totals & { base: number }, grams: number): Totals {
+	const factor = grams / food.base;
+	return {
+		kcal: food.kcal * factor,
+		protein: food.protein * factor,
+		carbs: food.carbs * factor,
+		fat: food.fat * factor,
+		fiber: food.fiber * factor
+	};
+}
+
+export function sumTotals(entries: Array<Partial<Totals>>, key: keyof Totals): number {
+	return entries.reduce((acc, entry) => acc + (entry[key] ?? 0), 0);
+}
+
+export function scaleTotals(entry: Totals, grams: number, prevGrams: number): Totals {
+	const factor = prevGrams > 0 ? grams / prevGrams : 0;
+	return {
+		kcal: entry.kcal * factor,
+		protein: entry.protein * factor,
+		carbs: entry.carbs * factor,
+		fat: entry.fat * factor,
+		fiber: entry.fiber * factor
+	};
+}
