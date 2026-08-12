@@ -1,87 +1,54 @@
-# MacroTrack
+# MacroTrack 🥗
 
-Seguimiento de macronutrientes (kcal, proteínas, hidratos, grasas, fibra) 100% local, sin servidor. PWA instalable en el iPhone.
+Seguimiento de calorías y macronutrientes **100% privado y sin servidor**: una PWA que se instala en el iPhone (o se abre en cualquier navegador) y guarda todos tus datos en tu propio dispositivo.
 
-## Stack
+Sin cuentas, sin anuncios, sin sincronizar nada a la nube. Tus registros no salen de tu móvil.
 
-- **SvelteKit 5** (modo runes, SPA puro con `ssr = false` + adapter-static)
-- **Dexie.js** sobre IndexedDB — la base de datos local que crece con cada escaneo
-- **@zxing/library** — escáner de códigos de barras (EAN-13, EAN-8, UPC, CODE-128)
-- **OpenFoodFacts API** — solo para resolver códigos nuevos; los resultados se cachean en la BD local
-- Service worker nativo de SvelteKit para funcionar offline
+## Funciones
 
-## Comandos
+- **Diario por días** — registra alimentos por comidas (desayuno, comida, snack, cena) y ve al instante tus totales de kcal, proteínas, hidratos, grasas y fibra frente a tus objetivos.
+- **Escáner de código de barras** — apunta con la cámara al producto y resuélvelo automáticamente contra OpenFoodFacts (base de datos pública y gratuita). Cada producto se consulta una sola vez; después vive en tu dispositivo y funciona **offline**.
+- **Base de datos de alimentos** — catálogo inicial de 23 alimentos comunes; añade los tuyos a mano o buscando por nombre en OpenFoodFacts.
+- **Objetivos calculados para ti** — tu perfil (altura, peso, edad, sexo, actividad, objetivo) calcula tus dianas con la fórmula de Harris-Benedict: perder grasa, recomposición, mantener o ganar músculo.
+- **Registro de peso** — pesate y guarda tu peso diario (con hora); gráfica de tendencia de 30 días y últimos registros.
+- **Stats semanales** — gráfica de calorías de los últimos 7 o 30 días con tu objetivo de referencia, y % de días que cumples cada objetivo.
+- **Interfaz nativa iOS** — pestañas inferiores estilo nativo, tema oscuro, instalable con un toque y usable sin conexión.
+
+## Instalación
+
+**iPhone/iPad**: abre la URL de la app en Safari → botón Compartir → **Añadir a pantalla de inicio**. Se abre como una app más. Recomendado: concede el permiso de cámara en Safari antes de instalar.
+
+**Cualquier otro dispositivo**: simplemente abre la URL. (Puedes añadirla a la pantalla de inicio de Android desde Chrome.)
+
+> Nota: los datos son por origen y por navegador. Si usas la app en dos dispositivos, cada uno guarda lo suyo.
+
+## Para desarrolladores
+
+**Stack**: SvelteKit 5 (SPA + adapter-static) · Dexie.js/IndexedDB (base de datos local) · @zxing/library (escáner) · OpenFoodFacts API · service worker para offline.
 
 ```bash
-npm run dev      # desarrollo
-npm run check    # typecheck (svelte-check)
-npm run build    # build → carpeta build/ (estática, hostear gratis)
-npm run preview  # probar el build localmente
+npm install
+npm run dev        # desarrollo local
+npm run check      # typecheck
+npm run build      # build estático → build/
+npm run preview    # probar el build
+npm run test       # tests unitarios
 ```
 
-## Estructura
+**Despliegue**: el repo trae `netlify.toml` listo (build + publish `build/` + fallback SPA). Conecta el repo a Netlify y cada `git push` re-despliega. Vale también para Cloudflare Pages (usa `static/_redirects`).
 
 ```
-src/lib/db.ts                 # esquema Dexie: foods + entries
-src/lib/seed.ts               # catálogo embebido (23 alimentos comunes; se añaden sin duplicar)
-src/lib/openfoodfacts.ts      # cliente de la API pública (producto por código + búsqueda por nombre)
-src/lib/stores.svelte.ts      # estado con runes: diario + objetivos
-src/lib/components/           # MacroBar, FoodPicker
-src/routes/+page.svelte       # diario: totales vs objetivos, añadir comida
-src/routes/foods/+page.svelte # base de datos de alimentos (CRUD + búsqueda por nombre en OpenFoodFacts)
-src/routes/scan/+page.svelte  # escáner + OpenFoodFacts + fallback manual
-src/service-worker.ts         # precache del app shell + network-first
-scripts/gen-icons.mjs         # regenera los iconos PNG
+src/lib/db.ts               # esquema Dexie: foods, entries, weights
+src/lib/seed.ts             # catálogo inicial de alimentos
+src/lib/openfoodfacts.ts    # cliente de la API pública
+src/lib/stores.svelte.ts    # estado global (diario, objetivos, perfil, peso)
+src/lib/format.ts           # utilidades numéricas (coma decimal incluida)
+src/routes/+page.svelte     # diario
+src/routes/stats/+page.svelte   # gráficas y cumplimiento
+src/routes/foods/+page.svelte   # base de datos de alimentos
+src/routes/scan/+page.svelte    # escáner + alta manual
+src/routes/perfil/+page.svelte  # perfil y peso
+src/service-worker.ts       # precache y offline
 ```
 
-## Conceptos clave si vienes de React
-
-- **Runes** (`stores.svelte.ts`): `$state(x)` ≈ `useState` pero con asignación directa
-  (`x = 5` re-renderiza). `$derived(...)` ≈ `useMemo` automático. Sin hooks de efectos
-  ni arrays de dependencias. En Svelte, `<input bind:value={x}>` es el dos-direcciones.
-- **`{@render children()}`** en `+layout.svelte` ≈ `{children}` de React.
-- **Props**: `let { prop } = $props()` en vez de `props: Props`.
-
-## Flujo de escaneo
-
-1. Escaneas un código → se busca primero en tu BD local (IndexedDB).
-2. Si no existe → consulta a OpenFoodFacts (gratis, sin API key, ~15 req/min).
-3. Si existe → se guarda en tu BD y puedes añadirlo al diario.
-4. Si no existe en ningún sitio → formulario manual prefilled con el código.
-
-Cada producto se consulta a la red **una sola vez**; después vive en tu dispositivo.
-
-## Despliegue en Netlify (gratis)
-
-El repo ya trae `netlify.toml` (build: `npm run build`, publish: `build/`, Node 22)
-y `static/_redirects` (fallback SPA a `200.html`, también válido para Cloudflare Pages).
-
-1. `git init && git add . && git commit -m "inicial"` y sube el repo a GitHub.
-2. En [netlify.com](https://www.netlify.com) → **Add new site** → **Import an existing project** → conecta GitHub y elige el repo.
-3. Netlify detecta la config automáticamente → **Deploy**. Tienes la app en `https://<nombre>.netlify.app` con HTTPS gratis.
-4. Cada `git push` re-despliega solo.
-
-Alternativa sin Git: arrastrar la carpeta `build/` en **Netlify Drop** (deploy inmediato, sin CI/CD).
-
-## Instalación en iPhone
-
-1. Despliega `build/` en cualquier hosting estático HTTPS (Cloudflare Pages, Netlify…).
-2. Abre la URL en Safari → Compartir → **Añadir a pantalla de inicio**.
-3. Recomendado: concede el permiso de cámara en Safari **antes** de instalar la PWA.
-
-### Caveats de la cámara en iOS (conocidos)
-
-- WebKit ha tenido regresiones históricas con `getUserMedia` en modo standalone
-  (buggy en 17.4.1 y 18.1; estable en 18.7+). El código hace un "pre-warm" de la
-  cámara como workaround documentado.
-- No hay control de flash/linterna en Safari (ImageCapture no soportado).
-- Si la cámara falla: usa el **código manual** (input debajo del vídeo).
-- Si un escaneo falla o el producto no está, siempre hay entrada manual.
-
-## Roadmap sugerido
-
-- Export/import de datos (JSON/CSV) — importante: todo vive en el dispositivo
-- Fotos de comidas, favoritos, comidas repetidas (recetas)
-- Métricas semanales (promedios por macro)
-- Si algún día quieres publicarla en el App Store: migrar a SwiftUI + SwiftData
-  manteniendo el mismo esquema (los datos se exportan desde IndexedDB)
+**Privacidad por diseño**: ningún dato sale del dispositivo salvo las consultas opcionales a OpenFoodFacts para resolver códigos de barras.
