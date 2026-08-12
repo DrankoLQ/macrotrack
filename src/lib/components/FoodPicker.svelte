@@ -35,6 +35,7 @@
 	function pick(food: Food) {
 		selected = food;
 		query = '';
+		mealType = suggestMealType();
 	}
 
 	function add() {
