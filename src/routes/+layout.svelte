@@ -16,7 +16,7 @@
 
 	const tabs = [
 		{ href: '/', label: 'Diario', Icon: HomeIcon, isActive: (path: string) => path === '/' },
-		{ href: '/stats', label: 'Stats', Icon: ChartLineIcon, isActive: (path: string) => path === '/stats' },
+		{ href: '/stats', label: 'Estadísticas', Icon: ChartLineIcon, isActive: (path: string) => path === '/stats' },
 		{ href: '/foods', label: 'Alimentos', Icon: UtensilsCrossedIcon, isActive: (path: string) => path === '/foods' },
 		{ href: '/scan', label: 'Escanear', Icon: ScanBarcodeIcon, isActive: (path: string) => path === '/scan' },
 		{ href: '/perfil', label: 'Perfil', Icon: UserIcon, isActive: (path: string) => path === '/perfil' }

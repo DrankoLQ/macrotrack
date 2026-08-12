@@ -15,7 +15,7 @@ Sin cuentas, sin anuncios, sin sincronizar nada a la nube. Tus registros no sale
 - **Base de datos de alimentos** — catálogo inicial de 23 alimentos comunes; añade los tuyos a mano o buscando por nombre en OpenFoodFacts.
 - **Objetivos calculados para ti** — tu perfil (altura, peso, edad, sexo, actividad, objetivo) calcula tus dianas con la fórmula de Harris-Benedict: perder grasa, recomposición, mantener o ganar músculo.
 - **Registro de peso** — pesate y guarda tu peso diario (con hora); gráfica de tendencia de 30 días y últimos registros.
-- **Stats semanales** — gráfica de calorías de los últimos 7 o 30 días con tu objetivo de referencia, y % de días que cumples cada objetivo.
+- **Estadísticas** — gráficas interactivas de calorías, proteínas, hidratos y grasas de los últimos 7 o 30 días con tu objetivo de referencia; toca una barra para ver su valor. Incluye % de días que cumples cada objetivo.
 - **Interfaz nativa iOS** — pestañas inferiores estilo nativo, tema oscuro, instalable con un toque y usable sin conexión.
 
 ## Instalación
@@ -48,7 +48,7 @@ src/lib/openfoodfacts.ts    # cliente de la API pública
 src/lib/stores.svelte.ts    # estado global (diario, objetivos, perfil, peso)
 src/lib/format.ts           # utilidades numéricas (coma decimal incluida)
 src/routes/+page.svelte     # diario
-src/routes/stats/+page.svelte   # gráficas y cumplimiento
+src/routes/stats/+page.svelte   # gráficas interactivas y cumplimiento
 src/routes/foods/+page.svelte   # base de datos de alimentos
 src/routes/scan/+page.svelte    # escáner + alta manual
 src/routes/perfil/+page.svelte  # perfil y peso
