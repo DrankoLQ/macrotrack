@@ -4,6 +4,10 @@ Seguimiento de calorías y macronutrientes **100% privado y sin servidor**: una 
 
 Sin cuentas, sin anuncios, sin sincronizar nada a la nube. Tus registros no salen de tu móvil.
 
+<p align="center">
+  <img src="https://github.com/user-attachments/assets/b0c803e2-739a-4146-9750-ecb4d796a123" alt="MacroTrack" width="480">
+</p>
+
 ## Funciones
 
 - **Diario por días** — registra alimentos por comidas (desayuno, comida, snack, cena) y ve al instante tus totales de kcal, proteínas, hidratos, grasas y fibra frente a tus objetivos.
