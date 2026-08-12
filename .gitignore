@@ -1,5 +1,10 @@
 node_modules
 
+# Herramientas locales
+/.codegraph
+/.cursor
+/.vscode
+
 # Output
 .output
 .vercel
