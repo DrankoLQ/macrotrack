@@ -4,7 +4,7 @@
 	import { db, type Food } from '$lib/db';
 	import { diary } from '$lib/stores.svelte';
 	import { fetchProductByBarcode, offToFood, type OffProduct } from '$lib/openfoodfacts';
-	import { fmt } from '$lib/format';
+	import { fmt, toNumber } from '$lib/format';
 	import { Card, CardContent } from '$lib/components/ui/card';
 	import { Button } from '$lib/components/ui/button';
 	import { Input } from '$lib/components/ui/input';
@@ -145,17 +145,16 @@
 	async function addManual() {
 		const name = manualName.trim();
 		if (!name) return;
-		const toNumber = (value: string) => parseFloat(value) || 0;
 		await saveFood({
 			name,
 			barcode: code.trim() || undefined,
 			brand: manualBrand.trim() || undefined,
 			base: 100,
-			kcal: toNumber(manual.kcal),
-			protein: toNumber(manual.protein),
-			carbs: toNumber(manual.carbs),
-			fat: toNumber(manual.fat),
-			fiber: toNumber(manual.fiber),
+			kcal: toNumber(manual.kcal) || 0,
+			protein: toNumber(manual.protein) || 0,
+			carbs: toNumber(manual.carbs) || 0,
+			fat: toNumber(manual.fat) || 0,
+			fiber: toNumber(manual.fiber) || 0,
 			source: 'manual',
 			createdAt: Date.now()
 		});
@@ -227,7 +226,7 @@
 			<div class="flex items-end gap-2">
 				<div class="w-28">
 					<Label class="mb-1 block">Gramos</Label>
-					<Input type="number" min="1" bind:value={grams} inputmode="decimal" />
+					<Input type="text" min="1" bind:value={grams} inputmode="decimal" />
 				</div>
 				{#if localFood}
 					<Button onclick={addFromLocal}>Añadir al diario</Button>
@@ -263,23 +262,23 @@
 		<div class="grid grid-cols-2 gap-2">
 			<div>
 				<Label class="mb-1 block">kcal / 100g</Label>
-				<Input type="number" bind:value={manual.kcal} inputmode="decimal" />
+				<Input type="text" bind:value={manual.kcal} inputmode="decimal" />
 			</div>
 			<div>
 				<Label class="mb-1 block">Proteína / 100g</Label>
-				<Input type="number" bind:value={manual.protein} inputmode="decimal" />
+				<Input type="text" bind:value={manual.protein} inputmode="decimal" />
 			</div>
 			<div>
 				<Label class="mb-1 block">Hidratos / 100g</Label>
-				<Input type="number" bind:value={manual.carbs} inputmode="decimal" />
+				<Input type="text" bind:value={manual.carbs} inputmode="decimal" />
 			</div>
 			<div>
 				<Label class="mb-1 block">Grasas / 100g</Label>
-				<Input type="number" bind:value={manual.fat} inputmode="decimal" />
+				<Input type="text" bind:value={manual.fat} inputmode="decimal" />
 			</div>
 			<div>
 				<Label class="mb-1 block">Fibra / 100g</Label>
-				<Input type="number" bind:value={manual.fiber} inputmode="decimal" />
+				<Input type="text" bind:value={manual.fiber} inputmode="decimal" />
 			</div>
 		</div>
 		<Button onclick={addManual} disabled={!manualName.trim()}>Guardar en base de datos</Button>

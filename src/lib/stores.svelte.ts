@@ -1,4 +1,4 @@
-import { db, suggestMealType, type Entry, type Food, type MealType } from './db';
+import { db, suggestMealType, type Entry, type Food, type MealType, type Weight } from './db';
 import {
 	computeGoals,
 	foodAtGrams,
@@ -125,3 +125,19 @@ class DiaryStore {
 }
 
 export const diary = new DiaryStore();
+
+class WeightStore {
+	records = $state<Weight[]>([]);
+
+	async load() {
+		this.records = await db.weights.orderBy('date').toArray();
+	}
+
+	async save(date: string, weight: number) {
+		const existing = await db.weights.where('date').equals(date).first();
+		await db.weights.put({ ...existing, date, weight, createdAt: Date.now() });
+		await this.load();
+	}
+}
+
+export const weights = new WeightStore();

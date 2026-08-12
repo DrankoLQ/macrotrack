@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
 	import { db, type Food } from '$lib/db';
-	import { fmt } from '$lib/format';
+	import { fmt, toNumber } from '$lib/format';
 	import { searchProducts, type OffSearchResult } from '$lib/openfoodfacts';
 	import ConfirmDialog from '$lib/components/ConfirmDialog.svelte';
 	import { Card, CardContent } from '$lib/components/ui/card';
@@ -65,7 +65,6 @@
 	}
 
 	async function save() {
-		const toNumber = (value: string) => parseFloat(value) || 0;
 		const name = form.name.trim();
 		if (!name) return;
 		const data = {
@@ -74,11 +73,11 @@
 			barcode: form.barcode.trim() || undefined,
 			unitSize: toNumber(form.unitSize) > 0 ? toNumber(form.unitSize) : undefined,
 			base: 100,
-			kcal: toNumber(form.kcal),
-			protein: toNumber(form.protein),
-			carbs: toNumber(form.carbs),
-			fat: toNumber(form.fat),
-			fiber: toNumber(form.fiber)
+			kcal: toNumber(form.kcal) || 0,
+			protein: toNumber(form.protein) || 0,
+			carbs: toNumber(form.carbs) || 0,
+			fat: toNumber(form.fat) || 0,
+			fiber: toNumber(form.fiber) || 0
 		};
 		formError = '';
 		try {
@@ -198,28 +197,28 @@
 				</div>
 				<div>
 					<Label class="mb-1 block">Gramos por unidad</Label>
-					<Input type="number" min="0.1" bind:value={form.unitSize} placeholder="Opcional · ej: 66 helado, 330 lata" inputmode="decimal" />
+					<Input type="text" min="0.1" bind:value={form.unitSize} placeholder="Opcional · ej: 66 helado, 330 lata" inputmode="decimal" />
 				</div>
 				<div class="grid grid-cols-2 gap-2">
 					<div>
 						<Label class="mb-1 block">kcal / 100g</Label>
-						<Input type="number" bind:value={form.kcal} inputmode="decimal" />
+						<Input type="text" bind:value={form.kcal} inputmode="decimal" />
 					</div>
 					<div>
 						<Label class="mb-1 block">Proteína / 100g</Label>
-						<Input type="number" bind:value={form.protein} inputmode="decimal" />
+						<Input type="text" bind:value={form.protein} inputmode="decimal" />
 					</div>
 					<div>
 						<Label class="mb-1 block">Hidratos / 100g</Label>
-						<Input type="number" bind:value={form.carbs} inputmode="decimal" />
+						<Input type="text" bind:value={form.carbs} inputmode="decimal" />
 					</div>
 					<div>
 						<Label class="mb-1 block">Grasas / 100g</Label>
-						<Input type="number" bind:value={form.fat} inputmode="decimal" />
+						<Input type="text" bind:value={form.fat} inputmode="decimal" />
 					</div>
 					<div>
 						<Label class="mb-1 block">Fibra / 100g</Label>
-						<Input type="number" bind:value={form.fiber} inputmode="decimal" />
+						<Input type="text" bind:value={form.fiber} inputmode="decimal" />
 					</div>
 				</div>
 				<Button onclick={save}>{editingId !== null ? 'Guardar cambios' : 'Guardar'}</Button>

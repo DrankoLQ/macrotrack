@@ -8,7 +8,7 @@
 		type Goal,
 		type Sex
 	} from '$lib/stores.svelte';
-	import { fmt } from '$lib/format';
+	import { fmt, toNumber } from '$lib/format';
 	import { Card, CardContent } from '$lib/components/ui/card';
 	import { Input } from '$lib/components/ui/input';
 	import { Label } from '$lib/components/ui/label';
@@ -45,17 +45,17 @@
 	});
 
 	const preview = $derived.by(() => {
-		const height = parseFloat(form.height);
-		const weight = parseFloat(form.weight);
-		const age = parseFloat(form.age);
+		const height = toNumber(form.height);
+		const weight = toNumber(form.weight);
+		const age = toNumber(form.age);
 		if (!height || !weight || !age) return null;
 		return computeGoals({ height, weight, age, sex: form.sex, activity: form.activity, goal: form.goal });
 	});
 
 	function submit() {
-		const height = parseFloat(form.height);
-		const weight = parseFloat(form.weight);
-		const age = parseFloat(form.age);
+		const height = toNumber(form.height);
+		const weight = toNumber(form.weight);
+		const age = toNumber(form.age);
 		if (!height || !weight || !age) return;
 		const data = { height, weight, age, sex: form.sex, activity: form.activity, goal: form.goal };
 		Object.assign(goals, computeGoals(data));
@@ -73,15 +73,15 @@
 				<div class="grid grid-cols-3 gap-2">
 					<div>
 						<Label class="mb-1 block">Altura (cm)</Label>
-						<Input type="number" min="100" max="250" bind:value={form.height} placeholder="Ej: 175" inputmode="numeric" />
+						<Input type="text" min="100" max="250" bind:value={form.height} placeholder="Ej: 175" inputmode="numeric" />
 					</div>
 					<div>
 						<Label class="mb-1 block">Peso (kg)</Label>
-						<Input type="number" min="30" max="250" bind:value={form.weight} placeholder="Ej: 70" inputmode="decimal" />
+						<Input type="text" min="30" max="250" bind:value={form.weight} placeholder="Ej: 70" inputmode="decimal" />
 					</div>
 					<div>
 						<Label class="mb-1 block">Edad</Label>
-						<Input type="number" min="10" max="120" bind:value={form.age} placeholder="Ej: 30" inputmode="numeric" />
+						<Input type="text" min="10" max="120" bind:value={form.age} placeholder="Ej: 30" inputmode="numeric" />
 					</div>
 				</div>
 				<div>

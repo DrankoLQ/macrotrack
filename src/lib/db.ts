@@ -54,9 +54,17 @@ export interface Entry {
 	createdAt: number;
 }
 
+export interface Weight {
+	id?: number;
+	date: string;
+	weight: number;
+	createdAt: number;
+}
+
 export const db = new Dexie('macrotrack') as Dexie & {
 	foods: EntityTable<Food, 'id'>;
 	entries: EntityTable<Entry, 'id'>;
+	weights: EntityTable<Weight, 'id'>;
 };
 
 db.version(1).stores({
@@ -72,3 +80,9 @@ db.version(2)
 	.upgrade((tx) => tx.table('entries').toCollection().modify((entry: Entry) => {
 		entry.mealType = 'comida';
 	}));
+
+db.version(3).stores({
+	foods: '++id, &barcode, name',
+	entries: '++id, date, foodId, mealType',
+	weights: '++id, &date'
+});

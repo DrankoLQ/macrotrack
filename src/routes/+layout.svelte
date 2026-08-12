@@ -9,13 +9,15 @@
 	import HomeIcon from '@lucide/svelte/icons/home';
 	import UtensilsCrossedIcon from '@lucide/svelte/icons/utensils-crossed';
 	import ScanBarcodeIcon from '@lucide/svelte/icons/scan-barcode';
+	import UserIcon from '@lucide/svelte/icons/user';
 
 	let { children } = $props();
 
 	const tabs = [
 		{ href: '/', label: 'Diario', Icon: HomeIcon, isActive: (path: string) => path === '/' },
 		{ href: '/foods', label: 'Alimentos', Icon: UtensilsCrossedIcon, isActive: (path: string) => path === '/foods' },
-		{ href: '/scan', label: 'Escanear', Icon: ScanBarcodeIcon, isActive: (path: string) => path === '/scan' }
+		{ href: '/scan', label: 'Escanear', Icon: ScanBarcodeIcon, isActive: (path: string) => path === '/scan' },
+		{ href: '/perfil', label: 'Perfil', Icon: UserIcon, isActive: (path: string) => path === '/perfil' }
 	];
 
 	let profileReady = $state(false);

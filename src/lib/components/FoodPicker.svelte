@@ -83,10 +83,10 @@
 				<div class="min-w-0 flex-1">
 					{#if selected.unitSize}
 						<Label class="mb-1 block">Unidades</Label>
-						<Input type="number" min="0.1" bind:value={units} inputmode="decimal" />
+						<Input type="text" min="0.1" bind:value={units} inputmode="decimal" />
 					{:else}
 						<Label class="mb-1 block">Gramos</Label>
-						<Input type="number" min="1" bind:value={grams} inputmode="decimal" />
+						<Input type="text" min="1" bind:value={grams} inputmode="decimal" />
 					{/if}
 				</div>
 				<div class="min-w-0 flex-1">
