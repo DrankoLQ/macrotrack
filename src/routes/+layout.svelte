@@ -7,6 +7,7 @@
 	import { loadGoals, loadProfile, profile } from '$lib/stores.svelte';
 	import Onboarding from '$lib/components/Onboarding.svelte';
 	import HomeIcon from '@lucide/svelte/icons/home';
+	import ChartLineIcon from '@lucide/svelte/icons/chart-line';
 	import UtensilsCrossedIcon from '@lucide/svelte/icons/utensils-crossed';
 	import ScanBarcodeIcon from '@lucide/svelte/icons/scan-barcode';
 	import UserIcon from '@lucide/svelte/icons/user';
@@ -15,6 +16,7 @@
 
 	const tabs = [
 		{ href: '/', label: 'Diario', Icon: HomeIcon, isActive: (path: string) => path === '/' },
+		{ href: '/stats', label: 'Stats', Icon: ChartLineIcon, isActive: (path: string) => path === '/stats' },
 		{ href: '/foods', label: 'Alimentos', Icon: UtensilsCrossedIcon, isActive: (path: string) => path === '/foods' },
 		{ href: '/scan', label: 'Escanear', Icon: ScanBarcodeIcon, isActive: (path: string) => path === '/scan' },
 		{ href: '/perfil', label: 'Perfil', Icon: UserIcon, isActive: (path: string) => path === '/perfil' }
