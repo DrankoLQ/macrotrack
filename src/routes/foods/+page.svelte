@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
 	import { db, type Food } from '$lib/db';
-	import { fmt, toNumber } from '$lib/format';
+	import { fmt, fold, toNumber } from '$lib/format';
 	import { searchProducts, type OffSearchResult } from '$lib/openfoodfacts';
 	import ConfirmDialog from '$lib/components/ConfirmDialog.svelte';
 	import { Card, CardContent } from '$lib/components/ui/card';
@@ -39,10 +39,10 @@
 	});
 
 	const filtered = $derived.by(() => {
-		const q = query.trim().toLowerCase();
+		const q = fold(query);
 		if (!q) return foods;
 		return foods.filter(
-			(food) => food.name.toLowerCase().includes(q) || (food.barcode ?? '').includes(q)
+			(food) => fold(food.name).includes(q) || (food.barcode ?? '').includes(q)
 		);
 	});
 

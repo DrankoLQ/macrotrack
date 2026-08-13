@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { db, type Food, type MealType, MEAL_TYPES, suggestMealType } from '$lib/db';
-	import { fmt } from '$lib/format';
+	import { fmt, fold } from '$lib/format';
 	import { Input } from '$lib/components/ui/input';
 	import { Button } from '$lib/components/ui/button';
 	import { Label } from '$lib/components/ui/label';
@@ -17,9 +17,9 @@
 	let mealType = $state<MealType>(suggestMealType());
 
 	const results = $derived.by(() => {
-		const q = query.trim().toLowerCase();
+		const q = fold(query);
 		if (!q) return [];
-		return foods.filter((food) => food.name.toLowerCase().includes(q)).slice(0, 8);
+		return foods.filter((food) => fold(food.name).includes(q)).slice(0, 8);
 	});
 
 	$effect(() => {

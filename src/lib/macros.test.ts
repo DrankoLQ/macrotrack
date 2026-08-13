@@ -1,6 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { foodAtGrams, scaleTotals, sumTotals } from './macros.ts';
+import { fold } from './format.ts';
 
 const FOOD = { base: 100, kcal: 270, protein: 20, carbs: 25, fat: 10, fiber: 5 }; // 20*4+25*4+10*9 = 270
 
@@ -51,4 +52,10 @@ test('scaleTotals con prevGrams 0 devuelve 0', () => {
 	const scaled = scaleTotals(FOOD, 100, 0);
 	assert.equal(scaled.kcal, 0);
 	assert.equal(scaled.protein, 0);
+});
+
+test('fold ignora tildes y mayúsculas', () => {
+	assert.equal(fold('Garbánzos Cocídos ÁÉÍÓÚÑ'), 'garbanzos cocidos aeioun');
+	assert.equal(fold('Patata'), 'patata');
+	assert.equal(fold('café con leche').includes('cafe'), true);
 });
