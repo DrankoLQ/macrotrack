@@ -1,6 +1,6 @@
 <script lang="ts">
 	import {
-		computeGoals,
+		computeGoalsBreakdown,
 		goals,
 		today,
 		profile,
@@ -41,6 +41,13 @@
 		{ key: 'gain', label: 'Ganar músculo (+250 kcal)' }
 	];
 
+	const GOAL_SHORT: Record<Goal, string> = {
+		lose: 'Perder grasa',
+		recomp: 'Recomposición',
+		maintain: 'Mantener',
+		gain: 'Ganar músculo'
+	};
+
 	const pform = $state({
 		height: '',
 		weight: '',
@@ -64,13 +71,16 @@
 		}
 	});
 
-	const profileTotals = $derived.by(() => {
+	const profileBreakdown = $derived.by(() => {
 		const height = toNumber(pform.height);
 		const weight = toNumber(pform.weight);
 		const age = toNumber(pform.age);
 		if (!height || !weight || !age) return null;
-		return computeGoals({ height, weight, age, sex: pform.sex, activity: pform.activity, goal: pform.goal });
+		return computeGoalsBreakdown({ height, weight, age, sex: pform.sex, activity: pform.activity, goal: pform.goal });
 	});
+
+	const weightKg = $derived(toNumber(pform.weight));
+	const profileTotals = $derived(profileBreakdown?.totals ?? null);
 
 	$effect(() => {
 		if (!profileTotals) return;
@@ -214,10 +224,24 @@ function weightTimeLabel(record: { createdAt: number }) {
 				</Select.Content>
 			</Select.Root>
 		</div>
-		{#if profileTotals}
-			<p class="text-xs text-muted-foreground">
-				Objetivos calculados: {fmt(profileTotals.kcal)} kcal · P {fmt(profileTotals.protein)} · C {fmt(profileTotals.carbs)} · G {fmt(profileTotals.fat)} · F {fmt(profileTotals.fiber)}
-			</p>
+		{#if profileBreakdown}
+			<div class="grid gap-1 rounded-lg border border-border bg-muted/40 p-3 text-xs text-muted-foreground">
+				<p class="font-semibold text-foreground">
+					Objetivos calculados: {fmt(profileBreakdown.totals.kcal)} kcal · P {fmt(profileBreakdown.totals.protein)} g · C {fmt(profileBreakdown.totals.carbs)} g · G {fmt(profileBreakdown.totals.fat)} g · F {fmt(profileBreakdown.totals.fiber)} g
+				</p>
+				<p>
+					TMB (Harris-Benedict): {fmt(profileBreakdown.tmb)} kcal × {fmt(profileBreakdown.activityFactor, 3)} (actividad) = {fmt(profileBreakdown.tdee)} kcal/día
+				</p>
+				<p>
+					Ajuste objetivo ({GOAL_SHORT[pform.goal]}): {profileBreakdown.adjustment > 0 ? '+' : ''}{fmt(profileBreakdown.adjustment)} kcal → {fmt(profileBreakdown.totals.kcal)} kcal
+				</p>
+				<p>
+					Proteína: {fmt(weightKg)} kg × 2.1 = {fmt(profileBreakdown.totals.protein)} g · Grasa: {fmt(weightKg)} kg × 0.9 = {fmt(profileBreakdown.totals.fat)} g
+				</p>
+				<p>
+					Carbohidratos: ({fmt(profileBreakdown.totals.kcal)} − {fmt(profileBreakdown.totals.protein * 4)} − {fmt(profileBreakdown.totals.fat * 9)}) ÷ 4 = {fmt(profileBreakdown.totals.carbs)} g
+				</p>
+			</div>
 		{:else}
 			<p class="text-xs text-muted-foreground">Rellena altura, peso y edad para calcular tus objetivos (Harris-Benedict).</p>
 		{/if}

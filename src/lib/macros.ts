@@ -35,16 +35,36 @@ export const GOAL_ADJUSTMENTS: Record<Goal, number> = {
 	gain: 250
 };
 
-export function computeGoals(p: Profile): Totals {
+export interface GoalsBreakdown {
+	tmb: number;
+	tdee: number;
+	activityFactor: number;
+	adjustment: number;
+	totals: Totals;
+}
+
+export function computeGoalsBreakdown(p: Profile): GoalsBreakdown {
 	const tmb =
 		p.sex === 'male'
 			? 88.362 + 13.397 * p.weight + 4.799 * p.height - 5.677 * p.age
 			: 447.6 + 9.25 * p.weight + 3.1 * p.height - 4.33 * p.age;
-	const kcal = Math.round(tmb * ACTIVITY_FACTORS[p.activity] + GOAL_ADJUSTMENTS[p.goal ?? 'recomp']);
+	const activityFactor = ACTIVITY_FACTORS[p.activity];
+	const adjustment = GOAL_ADJUSTMENTS[p.goal ?? 'recomp'];
+	const kcal = Math.round(tmb * activityFactor + adjustment);
 	const protein = Math.round(p.weight * 2.1);
 	const fat = Math.round(p.weight * 0.9);
 	const carbs = Math.max(0, Math.round((kcal - protein * 4 - fat * 9) / 4));
-	return { kcal, protein, carbs, fat, fiber: 30 };
+	return {
+		tmb,
+		tdee: tmb * activityFactor,
+		activityFactor,
+		adjustment,
+		totals: { kcal, protein, carbs, fat, fiber: 30 }
+	};
+}
+
+export function computeGoals(p: Profile): Totals {
+	return computeGoalsBreakdown(p).totals;
 }
 
 export function foodAtGrams(food: Totals & { base: number }, grams: number): Totals {

@@ -12,7 +12,7 @@ import {
 } from './macros';
 
 export type { Totals, Sex, ActivityLevel, Goal, Profile } from './macros';
-export { computeGoals, ACTIVITY_FACTORS, GOAL_ADJUSTMENTS } from './macros';
+export { computeGoals, computeGoalsBreakdown, ACTIVITY_FACTORS, GOAL_ADJUSTMENTS } from './macros';
 
 const GOALS_KEY = 'macrotrack:goals';
 
