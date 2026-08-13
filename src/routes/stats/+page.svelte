@@ -6,7 +6,7 @@
 	import MacroChart from '$lib/components/MacroChart.svelte';
 	import type { ChartDirection } from '$lib/chart';
 
-	type DayTotals = { date: string; kcal: number; protein: number; carbs: number; fat: number };
+	type DayTotals = { date: string; kcal: number; protein: number; carbs: number; fat: number; fiber: number };
 	type Series = {
 		label: string;
 		unit: string;
@@ -26,11 +26,12 @@
 		const entries = await db.entries.where('date').between(from, to, true, false).toArray();
 		const map = new Map<string, DayTotals>();
 		for (const e of entries) {
-			const day = map.get(e.date) ?? { date: e.date, kcal: 0, protein: 0, carbs: 0, fat: 0 };
+			const day = map.get(e.date) ?? { date: e.date, kcal: 0, protein: 0, carbs: 0, fat: 0, fiber: 0 };
 			day.kcal += e.kcal;
 			day.protein += e.protein;
 			day.carbs += e.carbs;
 			day.fat += e.fat;
+			day.fiber += e.fiber;
 			map.set(e.date, day);
 		}
 		byDay = [...map.values()].sort((a, b) => a.date.localeCompare(b.date));
@@ -68,6 +69,13 @@
 			direction: 'max',
 			goal: goals.fat,
 			days: byDay.map((d) => ({ date: d.date, value: d.fat }))
+		},
+		{
+			label: 'Fibra por día',
+			unit: 'g',
+			direction: 'min',
+			goal: goals.fiber,
+			days: byDay.map((d) => ({ date: d.date, value: d.fiber }))
 		}
 	]);
 
@@ -78,7 +86,8 @@
 			kcal: pct(byDay.filter((d) => d.kcal <= goals.kcal).length),
 			protein: pct(byDay.filter((d) => d.protein >= goals.protein).length),
 			carbs: pct(byDay.filter((d) => d.carbs <= goals.carbs).length),
-			fat: pct(byDay.filter((d) => d.fat <= goals.fat).length)
+			fat: pct(byDay.filter((d) => d.fat <= goals.fat).length),
+			fiber: pct(byDay.filter((d) => d.fiber >= goals.fiber).length)
 		};
 	});
 </script>
@@ -139,6 +148,10 @@
 					<div class="rounded-lg bg-secondary p-3">
 						<p class="text-xs text-muted-foreground">grasas ≤ objetivo</p>
 						<p class="text-lg font-bold">{compliance.fat}%</p>
+					</div>
+					<div class="rounded-lg bg-secondary p-3">
+						<p class="text-xs text-muted-foreground">fibra ≥ objetivo</p>
+						<p class="text-lg font-bold">{compliance.fiber}%</p>
 					</div>
 				</div>
 			</CardContent>
