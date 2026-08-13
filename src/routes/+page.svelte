@@ -12,18 +12,20 @@
 	import { Label } from '$lib/components/ui/label';
 	import * as Select from '$lib/components/ui/select';
 	import { Select as SelectPrimitive } from 'bits-ui';
+	import type { ChartDirection } from '$lib/chart';
+	import type { Totals } from '$lib/macros';
 	import ChevronLeftIcon from '@lucide/svelte/icons/chevron-left';
 	import ChevronRightIcon from '@lucide/svelte/icons/chevron-right';
 	import PencilIcon from '@lucide/svelte/icons/pencil';
 	import Trash2Icon from '@lucide/svelte/icons/trash-2';
 
-	const macros = [
-		{ key: 'kcal', label: 'Calorías', unit: 'kcal' },
-		{ key: 'protein', label: 'Proteínas', unit: 'g' },
-		{ key: 'carbs', label: 'Hidratos', unit: 'g' },
-		{ key: 'fat', label: 'Grasas', unit: 'g' },
-		{ key: 'fiber', label: 'Fibra', unit: 'g' }
-	] as const;
+	const macros: { key: keyof Totals; label: string; unit: string; direction: ChartDirection }[] = [
+		{ key: 'kcal', label: 'Calorías', unit: 'kcal', direction: 'max' },
+		{ key: 'protein', label: 'Proteínas', unit: 'g', direction: 'min' },
+		{ key: 'carbs', label: 'Hidratos', unit: 'g', direction: 'max' },
+		{ key: 'fat', label: 'Grasas', unit: 'g', direction: 'max' },
+		{ key: 'fiber', label: 'Fibra', unit: 'g', direction: 'min' }
+	];
 
 	const dateLabel = $derived(
 		new Date(diary.date + 'T12:00:00').toLocaleDateString('es-ES', {
@@ -113,6 +115,7 @@
 					value={diary.totals[macro.key]}
 					goal={goals[macro.key]}
 					unit={macro.unit}
+					direction={macro.direction}
 				/>
 			{/each}
 		</div>
