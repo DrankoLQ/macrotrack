@@ -84,6 +84,7 @@
 	});
 
 	let weightInput = $state('');
+	let bodyFatInput = $state('');
 	let weightSaved = $state(false);
 
 	const weightRange = $derived.by(() => {
@@ -122,14 +123,18 @@ function weightTimeLabel(record: { createdAt: number }) {
 	async function saveWeight() {
 		const w = toNumber(weightInput);
 		if (!w || w <= 0) return;
-		await weights.save(today(), w);
+		const fat = toNumber(bodyFatInput);
+		await weights.save(today(), w, fat > 0 ? fat : undefined);
 		weightSaved = true;
 		setTimeout(() => (weightSaved = false), 2500);
 	}
 
 	weights.load().then(() => {
 		const latest = weights.records.at(-1);
-		if (latest) weightInput = String(latest.weight);
+		if (latest) {
+			weightInput = String(latest.weight);
+			if (latest.bodyFat) bodyFatInput = String(latest.bodyFat);
+		}
 	});
 </script>
 
@@ -220,6 +225,18 @@ function weightTimeLabel(record: { createdAt: number }) {
 					placeholder={profile.value ? String(profile.value.weight) : ''}
 				/>
 			</div>
+			<div class="w-28">
+				<Label class="mb-1 block">% de grasa <span class="text-muted-foreground">(opcional)</span></Label>
+				<Input
+					type="text"
+					min="1"
+					max="70"
+					step="0.1"
+					bind:value={bodyFatInput}
+					inputmode="decimal"
+					placeholder="—"
+				/>
+			</div>
 			<Button onclick={saveWeight} disabled={!weightInput.trim()}>
 				{weightSaved ? 'Guardado ✓' : 'Guardar'}
 			</Button>
@@ -243,7 +260,7 @@ function weightTimeLabel(record: { createdAt: number }) {
 				{#each recentWeights as record}
 					<li class="flex items-center justify-between py-1.5 text-sm">
 						<span class="text-muted-foreground capitalize">{weightDateLabel(record.date)} · {weightTimeLabel(record)}</span>
-						<span class="font-semibold">{fmt(record.weight)} kg</span>
+						<span class="font-semibold">{fmt(record.weight)} kg{#if record.bodyFat} · {fmt(record.bodyFat)}% grasa{/if}</span>
 					</li>
 				{/each}
 			</ul>

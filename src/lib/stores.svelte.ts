@@ -133,9 +133,9 @@ class WeightStore {
 		this.records = await db.weights.orderBy('date').toArray();
 	}
 
-	async save(date: string, weight: number) {
+	async save(date: string, weight: number, bodyFat?: number) {
 		const existing = await db.weights.where('date').equals(date).first();
-		await db.weights.put({ ...existing, date, weight, createdAt: Date.now() });
+		await db.weights.put({ ...existing, date, weight, bodyFat, createdAt: Date.now() });
 		await this.load();
 	}
 }

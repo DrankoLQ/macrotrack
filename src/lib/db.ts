@@ -58,6 +58,7 @@ export interface Weight {
 	id?: number;
 	date: string;
 	weight: number;
+	bodyFat?: number;
 	createdAt: number;
 }
 
