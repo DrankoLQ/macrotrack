@@ -19,11 +19,12 @@ export interface Food {
 	createdAt: number;
 }
 
-export type MealType = 'desayuno' | 'comida' | 'cena' | 'snack';
+export type MealType = 'desayuno' | 'comida' | 'cena' | 'snack' | 'merienda';
 
 export const MEAL_TYPES: { key: MealType; label: string }[] = [
 	{ key: 'desayuno', label: 'Desayuno' },
 	{ key: 'comida', label: 'Comida' },
+	{ key: 'merienda', label: 'Merienda' },
 	{ key: 'snack', label: 'Snack' },
 	{ key: 'cena', label: 'Cena' }
 ];
@@ -32,9 +33,9 @@ export function suggestMealType(now: Date = new Date()): MealType {
 	const hour = now.getHours();
 	if (hour >= 5 && hour < 11) return 'desayuno';
 	if (hour >= 11 && hour < 16) return 'comida';
-	if (hour >= 16 && hour < 19) return 'snack';
+	if (hour >= 16 && hour < 19) return 'merienda';
 	if (hour >= 19 && hour < 23) return 'cena';
-	return 'cena';
+	return 'snack';
 }
 
 export interface Entry {
