@@ -230,19 +230,19 @@ function weightTimeLabel(record: { createdAt: number }) {
 					Objetivos calculados: {fmt(profileBreakdown.totals.kcal)} kcal · P {fmt(profileBreakdown.totals.protein)} g · C {fmt(profileBreakdown.totals.carbs)} g · G {fmt(profileBreakdown.totals.fat)} g · F {fmt(profileBreakdown.totals.fiber)} g
 				</p>
 				<p>
-					TMB (Harris-Benedict): {fmt(profileBreakdown.tmb)} kcal × {fmt(profileBreakdown.activityFactor, 3)} (actividad) = {fmt(profileBreakdown.tdee)} kcal/día
+					TMB (Harris-Benedict): {fmt(profileBreakdown.tmb)} kcal × {fmt(profileBreakdown.activityFactor, 3)} (actividad) = <span class="font-semibold text-foreground">{fmt(profileBreakdown.tdee)} kcal/día</span>
 				</p>
 				<p>
-					Ajuste objetivo ({GOAL_SHORT[pform.goal]}): {profileBreakdown.adjustment > 0 ? '+' : ''}{fmt(profileBreakdown.adjustment)} kcal → {fmt(profileBreakdown.totals.kcal)} kcal
+					Ajuste objetivo ({GOAL_SHORT[pform.goal]}): {profileBreakdown.adjustment > 0 ? '+' : ''}{fmt(profileBreakdown.adjustment)} kcal → <span class="font-semibold text-foreground">{fmt(profileBreakdown.totals.kcal)} kcal</span>
 				</p>
 				<p>
-					Proteína: {fmt(weightKg)} kg × 2.1 = {fmt(profileBreakdown.totals.protein)} g
+					Proteína: {fmt(weightKg)} kg × 2.1 = <span class="font-semibold text-foreground">{fmt(profileBreakdown.totals.protein)} g</span>
 				</p>
 				<p>
-					Grasa: {fmt(weightKg)} kg × 0.9 = {fmt(profileBreakdown.totals.fat)} g
+					Grasa: {fmt(weightKg)} kg × 0.9 = <span class="font-semibold text-foreground">{fmt(profileBreakdown.totals.fat)} g</span>
 				</p>
 				<p>
-					Carbohidratos: ({fmt(profileBreakdown.totals.kcal)} − {fmt(profileBreakdown.totals.protein * 4)} − {fmt(profileBreakdown.totals.fat * 9)}) ÷ 4 = {fmt(profileBreakdown.totals.carbs)} g
+					Carbohidratos: ({fmt(profileBreakdown.totals.kcal)} − {fmt(profileBreakdown.totals.protein * 4)} − {fmt(profileBreakdown.totals.fat * 9)}) ÷ 4 = <span class="font-semibold text-foreground">{fmt(profileBreakdown.totals.carbs)} g</span>
 				</p>
 			</div>
 		{:else}
