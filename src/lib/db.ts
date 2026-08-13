@@ -33,8 +33,8 @@ export function suggestMealType(now: Date = new Date()): MealType {
 	if (hour >= 5 && hour < 11) return 'desayuno';
 	if (hour >= 11 && hour < 16) return 'comida';
 	if (hour >= 16 && hour < 19) return 'snack';
-	if (hour >= 19 && hour < 22) return 'cena';
-	return 'snack';
+	if (hour >= 19 && hour < 23) return 'cena';
+	return 'cena';
 }
 
 export interface Entry {
