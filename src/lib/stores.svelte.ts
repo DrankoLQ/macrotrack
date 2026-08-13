@@ -138,6 +138,11 @@ class WeightStore {
 		await db.weights.put({ ...existing, date, weight, bodyFat, createdAt: Date.now() });
 		await this.load();
 	}
+
+	async remove(id: number) {
+		await db.weights.delete(id);
+		await this.load();
+	}
 }
 
 export const weights = new WeightStore();

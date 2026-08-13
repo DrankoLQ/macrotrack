@@ -12,6 +12,9 @@
 		type Sex
 	} from '$lib/stores.svelte';
 	import { fmt, toNumber } from '$lib/format';
+	import { type Weight } from '$lib/db';
+	import ConfirmDialog from '$lib/components/ConfirmDialog.svelte';
+	import Trash2Icon from '@lucide/svelte/icons/trash-2';
 	import { Card, CardContent } from '$lib/components/ui/card';
 	import { Button } from '$lib/components/ui/button';
 	import { Input } from '$lib/components/ui/input';
@@ -101,16 +104,33 @@
 			const age = (todayMs - new Date(r.date + 'T12:00:00').getTime()) / DAY;
 			const x = 300 - age * 10;
 			const y = 110 - ((r.weight - min + pad) / (max - min + pad * 2)) * 100;
-			return x.toFixed(1) + ',' + y.toFixed(1);
+			return { x: x.toFixed(1), y: y.toFixed(1) };
 		});
-		return { points: points.join(' '), delta: slice.at(-1)!.weight - slice[0].weight };
+		return {
+			points: points.map((p) => p.x + ',' + p.y).join(' '),
+			dots: points,
+			delta: slice.at(-1)!.weight - slice[0].weight
+		};
 	});
 
 	const deltaLabel = $derived(
 		weightRange ? (weightRange.delta > 0 ? '+' : '') + fmt(weightRange.delta) + ' kg' : null
 	);
 
-	const recentWeights = $derived(weights.records.slice(-5).reverse());
+	const weightHistory = $derived([...weights.records].reverse());
+
+	let confirmWeight = $state<Weight | null>(null);
+
+	async function deleteWeight() {
+		const record = confirmWeight;
+		if (!record?.id) return;
+		await weights.remove(record.id);
+		const latest = weights.records.at(-1);
+		if (weightInput === String(record.weight)) {
+			weightInput = latest ? String(latest.weight) : '';
+			bodyFatInput = latest?.bodyFat ? String(latest.bodyFat) : '';
+		}
+	}
 
 function weightDateLabel(date: string) {
 	return new Date(date + 'T12:00:00').toLocaleDateString('es-ES', { day: 'numeric', month: 'short' });
@@ -251,16 +271,31 @@ function weightTimeLabel(record: { createdAt: number }) {
 					stroke-linecap="round"
 					stroke-linejoin="round"
 				/>
+				{#each weightRange.dots as dot}
+					<circle cx={dot.x} cy={dot.y} r="3" fill="currentColor" />
+				{/each}
 			</svg>
 		{:else}
 			<p class="text-sm text-muted-foreground">Registra tu peso un par de días para ver la tendencia.</p>
 		{/if}
-		{#if recentWeights.length > 0}
-			<ul class="divide-y divide-border border-t border-border pt-1">
-				{#each recentWeights as record}
-					<li class="flex items-center justify-between py-1.5 text-sm">
+		{#if weightHistory.length > 0}
+			<ul class="max-h-44 divide-y divide-border overflow-y-auto border-t border-border pt-1">
+				{#each weightHistory as record}
+					<li class="flex items-center justify-between gap-2 py-1.5 text-sm">
 						<span class="text-muted-foreground capitalize">{weightDateLabel(record.date)} · {weightTimeLabel(record)}</span>
-						<span class="font-semibold">{fmt(record.weight)} kg{#if record.bodyFat} · {fmt(record.bodyFat)}% grasa{/if}</span>
+						<span class="flex items-center gap-2">
+							<span class="font-semibold">{fmt(record.weight)} kg{#if record.bodyFat} · {fmt(record.bodyFat)}% grasa{/if}</span>
+							<Button
+								variant="ghost"
+								size="icon-sm"
+								class="text-destructive hover:text-destructive"
+								onclick={() => (confirmWeight = record)}
+								title="Eliminar"
+								aria-label="Eliminar"
+							>
+								<Trash2Icon />
+							</Button>
+						</span>
 					</li>
 				{/each}
 			</ul>
@@ -269,3 +304,11 @@ function weightTimeLabel(record: { createdAt: number }) {
 		{/if}
 	</CardContent>
 </Card>
+
+<ConfirmDialog
+	open={confirmWeight !== null}
+	title="Eliminar peso"
+	message={'¿Eliminar el registro de ' + (confirmWeight ? fmt(confirmWeight.weight) + ' kg del ' + weightDateLabel(confirmWeight.date) : '') + '? Esta acción no se puede deshacer.'}
+	onConfirm={deleteWeight}
+	onClose={() => (confirmWeight = null)}
+/>
