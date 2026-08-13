@@ -236,7 +236,10 @@ function weightTimeLabel(record: { createdAt: number }) {
 					Ajuste objetivo ({GOAL_SHORT[pform.goal]}): {profileBreakdown.adjustment > 0 ? '+' : ''}{fmt(profileBreakdown.adjustment)} kcal → {fmt(profileBreakdown.totals.kcal)} kcal
 				</p>
 				<p>
-					Proteína: {fmt(weightKg)} kg × 2.1 = {fmt(profileBreakdown.totals.protein)} g · Grasa: {fmt(weightKg)} kg × 0.9 = {fmt(profileBreakdown.totals.fat)} g
+					Proteína: {fmt(weightKg)} kg × 2.1 = {fmt(profileBreakdown.totals.protein)} g
+				</p>
+				<p>
+					Grasa: {fmt(weightKg)} kg × 0.9 = {fmt(profileBreakdown.totals.fat)} g
 				</p>
 				<p>
 					Carbohidratos: ({fmt(profileBreakdown.totals.kcal)} − {fmt(profileBreakdown.totals.protein * 4)} − {fmt(profileBreakdown.totals.fat * 9)}) ÷ 4 = {fmt(profileBreakdown.totals.carbs)} g
