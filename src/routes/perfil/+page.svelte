@@ -110,15 +110,31 @@
 		const min = Math.min(...slice.map((r) => r.weight));
 		const max = Math.max(...slice.map((r) => r.weight));
 		const pad = Math.max((max - min) * 0.2, 0.2);
-		const points = slice.map((r) => {
-			const age = (todayMs - new Date(r.date + 'T12:00:00').getTime()) / DAY;
-			const x = 300 - age * 10;
-			const y = 110 - ((r.weight - min + pad) / (max - min + pad * 2)) * 100;
-			return { x: x.toFixed(1), y: y.toFixed(1) };
+		const W = 258;
+		const H = 96;
+		const ms = (date: string) => new Date(date + 'T12:00:00').getTime();
+		const minMs = Math.min(...slice.map((r) => ms(r.date)));
+		const maxMs = Math.max(...slice.map((r) => ms(r.date)));
+		const y = (w: number) => 106 - ((w - min + pad) / (max - min + pad * 2)) * H;
+		const points = slice.map((r, i) => {
+			const t =
+				maxMs === minMs ? i / (slice.length - 1) : (ms(r.date) - minMs) / (maxMs - minMs);
+			const x = 40 + (0.05 + t * 0.9) * W;
+			return { x: x.toFixed(1), y: y(r.weight).toFixed(1) };
 		});
+		const grid = [min, (min + max) / 2, max].map((w) => ({
+			y: y(w).toFixed(1),
+			label: fmt(w)
+		}));
+		const xLabels = [
+			{ x: points[0].x, anchor: 'start', label: weightDateLabel(slice[0].date) },
+			{ x: points.at(-1)!.x, anchor: 'end', label: weightDateLabel(slice.at(-1)!.date) }
+		];
 		return {
 			points: points.map((p) => p.x + ',' + p.y).join(' '),
 			dots: points,
+			grid,
+			xLabels,
 			delta: slice.at(-1)!.weight - slice[0].weight
 		};
 	});
@@ -289,7 +305,16 @@ function weightTimeLabel(record: { createdAt: number }) {
 			</Button>
 		</div>
 		{#if weightRange}
-			<svg viewBox="0 0 310 120" class="w-full text-primary" aria-hidden="true">
+			<svg viewBox="0 0 310 120" class="w-full text-primary" role="img" aria-label="Gráfica de peso">
+				<line x1="40" y1="106" x2="298" y2="106" stroke="currentColor" stroke-width="1" opacity="0.5" />
+				<line x1="40" y1="10" x2="40" y2="106" stroke="currentColor" stroke-width="1" opacity="0.5" />
+				{#each weightRange.grid as g}
+					<line x1="40" y1={g.y} x2="298" y2={g.y} stroke="currentColor" stroke-width="1" opacity="0.15" />
+					<text x="34" y={Number(g.y) + 3} font-size="8.5" text-anchor="end" fill="currentColor" opacity="0.6">{g.label}</text>
+				{/each}
+				{#each weightRange.xLabels as l}
+					<text x={l.x} y="116" font-size="8.5" text-anchor={l.anchor} fill="currentColor" opacity="0.6">{l.label}</text>
+				{/each}
 				<polyline
 					points={weightRange.points}
 					fill="none"
