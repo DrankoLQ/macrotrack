@@ -122,6 +122,12 @@
 			const x = 40 + (0.05 + t * 0.9) * W;
 			return { x: x.toFixed(1), y: y(r.weight).toFixed(1) };
 		});
+		const info = slice.map((r, i) => ({
+			...points[i],
+			date: r.date,
+			weight: r.weight,
+			bodyFat: r.bodyFat
+		}));
 		const grid = [min, (min + max) / 2, max].map((w) => ({
 			y: y(w).toFixed(1),
 			label: fmt(w)
@@ -130,12 +136,15 @@
 			{ x: points[0].x, anchor: 'start', label: weightDateLabel(slice[0].date) },
 			{ x: points.at(-1)!.x, anchor: 'end', label: weightDateLabel(slice.at(-1)!.date) }
 		];
+		const withFat = slice.filter((r) => r.bodyFat !== undefined);
 		return {
 			points: points.map((p) => p.x + ',' + p.y).join(' '),
 			dots: points,
+			info,
 			grid,
 			xLabels,
-			delta: slice.at(-1)!.weight - slice[0].weight
+			delta: slice.at(-1)!.weight - slice[0].weight,
+			fatDelta: withFat.length >= 2 ? withFat.at(-1)!.bodyFat! - withFat[0].bodyFat! : null
 		};
 	});
 
@@ -143,7 +152,36 @@
 		weightRange ? (weightRange.delta > 0 ? '+' : '') + fmt(weightRange.delta) + ' kg' : null
 	);
 
+	const fatDeltaLabel = $derived(
+		weightRange?.fatDelta == null
+			? null
+			: (weightRange.fatDelta > 0 ? '+' : '') + fmt(weightRange.fatDelta) + '% grasa'
+	);
+
 	const weightHistory = $derived([...weights.records].reverse());
+
+	let selectedWeight = $state<number | null>(null);
+
+	function tapWeightChart(e: PointerEvent) {
+		const range = weightRange;
+		if (!range) return;
+		const rect = (e.currentTarget as SVGSVGElement).getBoundingClientRect();
+		const scale = rect.width / 310;
+		const x = (e.clientX - rect.left) / scale;
+		const y = (e.clientY - rect.top) / scale;
+		let best = -1;
+		let bestD = 24 * 24;
+		range.dots.forEach((d, i) => {
+			const dx = Number(d.x) - x;
+			const dy = Number(d.y) - y;
+			const d2 = dx * dx + dy * dy;
+			if (d2 < bestD) {
+				bestD = d2;
+				best = i;
+			}
+		});
+		selectedWeight = best === selectedWeight ? null : best >= 0 ? best : null;
+	}
 
 	let confirmWeight = $state<Weight | null>(null);
 
@@ -272,7 +310,10 @@ function weightTimeLabel(record: { createdAt: number }) {
 		<div class="flex items-center justify-between">
 			<h2 class="text-base font-semibold">Peso</h2>
 			{#if deltaLabel}
-				<span class="text-xs text-muted-foreground">30 días · {deltaLabel}</span>
+				<span class="text-xs text-muted-foreground"
+					>30 días · <span class={weightRange!.delta <= 0 ? 'text-green-500' : 'text-red-500'}>{deltaLabel}</span>{#if fatDeltaLabel}
+						· <span class={weightRange!.fatDelta! <= 0 ? 'text-green-500' : 'text-red-500'}>{fatDeltaLabel}</span>{/if}</span
+				>
 			{/if}
 		</div>
 		<div class="flex items-end gap-2">
@@ -323,9 +364,38 @@ function weightTimeLabel(record: { createdAt: number }) {
 					stroke-linecap="round"
 					stroke-linejoin="round"
 				/>
-				{#each weightRange.dots as dot}
-					<circle cx={dot.x} cy={dot.y} r="3" fill="currentColor" />
+				{#each weightRange.dots as dot, i}
+					<circle cx={dot.x} cy={dot.y} r={selectedWeight === i ? 5 : 3} fill="currentColor" />
 				{/each}
+				{#if selectedWeight !== null && weightRange.info[selectedWeight]}
+					{@const p = weightRange.info[selectedWeight]}
+					{@const label = weightDateLabel(p.date) + ' · ' + fmt(p.weight) + ' kg' + (p.bodyFat ? ' · ' + fmt(p.bodyFat) + '% grasa' : '')}
+					{@const py = Number(p.y)}
+					{@const ty = py >= 34 ? py - 14 : py + 28}
+					<g pointer-events="none">
+						<rect x="0" y={ty - 11} width="310" height="22" fill="var(--background)" stroke="currentColor" stroke-width="1" rx="4" />
+						<text x="155" y={ty + 3} font-size="8.5" text-anchor="middle" fill="currentColor">{label}</text>
+					</g>
+				{/if}
+				<rect
+					x="0"
+					y="0"
+					width="310"
+					height="120"
+					fill="transparent"
+					role="button"
+					tabindex="0"
+					aria-label="Seleccionar punto de la gráfica de peso"
+					onpointerdown={tapWeightChart}
+					onkeydown={(e) => {
+						if (!['Enter', ' ', 'ArrowRight', 'ArrowLeft'].includes(e.key)) return;
+						e.preventDefault();
+						if (!weightRange) return;
+						const n = weightRange.dots.length;
+						if (e.key === 'Enter' || e.key === ' ') selectedWeight = selectedWeight === null ? 0 : null;
+						else selectedWeight = selectedWeight === null ? 0 : (selectedWeight + (e.key === 'ArrowRight' ? 1 : -1) + n) % n;
+					}}
+				/>
 			</svg>
 		{:else}
 			<p class="text-sm text-muted-foreground">Registra tu peso un par de días para ver la tendencia.</p>
