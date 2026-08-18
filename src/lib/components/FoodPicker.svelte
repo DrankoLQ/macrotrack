@@ -63,7 +63,7 @@
 		<ul class="max-h-64 flex flex-col gap-1 overflow-auto">
 			{#each results as food (food.id)}
 				<li>
-					<Button variant="ghost" class="w-full justify-between gap-2 font-normal" onclick={() => pick(food)}>
+					<Button variant="ghost" class="h-auto min-h-8 w-full items-start justify-between gap-2 py-2 font-normal" onclick={() => pick(food)}>
 						<span class="min-w-0 flex-1 whitespace-normal break-words text-left">{food.name}</span>
 						{#if food.brand}
 							<span class="max-w-[40%] shrink-0 truncate text-xs text-muted-foreground">{food.brand}</span>
