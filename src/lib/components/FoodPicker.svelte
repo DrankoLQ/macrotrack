@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { db, type Food, type MealType, MEAL_TYPES, suggestMealType } from '$lib/db';
-	import { fmt, fold } from '$lib/format';
+	import { fmt, fold, toNumber } from '$lib/format';
 	import { Input } from '$lib/components/ui/input';
 	import { Button } from '$lib/components/ui/button';
 	import { Label } from '$lib/components/ui/label';
@@ -12,8 +12,8 @@
 	let query = $state('');
 	let foods: Food[] = $state([]);
 	let selected: Food | null = $state(null);
-	let grams = $state(100);
-	let units = $state(1);
+	let grams = $state('');
+	let units = $state('');
 	let mealType = $state<MealType>(suggestMealType());
 
 	const results = $derived.by(() => {
@@ -41,12 +41,20 @@
 	function add() {
 		if (!selected) return;
 		const byUnit = selected.unitSize !== undefined;
-		onAdd(selected, byUnit ? units * selected.unitSize! : grams, mealType, byUnit ? units : undefined);
+		const amount = byUnit ? toNumber(units) : toNumber(grams);
+		if (!(amount > 0)) return;
+		onAdd(selected, byUnit ? amount * selected.unitSize! : amount, mealType, byUnit ? amount : undefined);
 		selected = null;
-		grams = 100;
-		units = 1;
+		grams = '';
+		units = '';
 		mealType = suggestMealType();
 	}
+
+	const canAdd = $derived.by(() => {
+		const s = selected;
+		if (!s) return false;
+		return s.unitSize !== undefined ? toNumber(units) > 0 : toNumber(grams) > 0;
+	});
 </script>
 
 <div class="flex flex-col gap-2">
@@ -104,7 +112,7 @@
 						</Select.Content>
 					</Select.Root>
 				</div>
-				<Button onclick={add}>Añadir</Button>
+				<Button onclick={add} disabled={!canAdd}>Añadir</Button>
 			</div>
 		</div>
 	{/if}
