@@ -122,7 +122,7 @@
 	</CardContent>
 </Card>
 
-<Card>
+<Card class="sticky top-2 z-10">
 	<CardContent>
 		<h2 class="mb-3 text-base font-semibold">Añadir</h2>
 		<FoodPicker onAdd={(food, grams, mealType, units) => diary.addFood(food, grams, mealType, units)} />

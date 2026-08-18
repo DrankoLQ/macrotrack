@@ -60,7 +60,7 @@
 <div class="flex flex-col gap-2">
 	<Input type="search" placeholder="Buscar alimento…" bind:value={query} />
 	{#if results.length > 0}
-		<ul class="flex flex-col gap-1">
+		<ul class="max-h-64 flex flex-col gap-1 overflow-auto">
 			{#each results as food (food.id)}
 				<li>
 					<Button variant="ghost" class="w-full justify-between gap-2 font-normal" onclick={() => pick(food)}>
