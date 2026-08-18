@@ -64,7 +64,7 @@
 			{#each results as food (food.id)}
 				<li>
 					<Button variant="ghost" class="w-full justify-between gap-2 font-normal" onclick={() => pick(food)}>
-						<span class="min-w-0 flex-1 truncate text-left">{food.name}</span>
+						<span class="min-w-0 flex-1 break-words text-left">{food.name}</span>
 						{#if food.brand}
 							<span class="max-w-[40%] shrink-0 truncate text-xs text-muted-foreground">{food.brand}</span>
 						{/if}
