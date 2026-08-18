@@ -52,13 +52,14 @@
 
 	<nav class="fixed inset-x-0 bottom-0 z-50 border-t border-border bg-card/80 backdrop-blur-xl">
 		<div class="mx-auto flex max-w-[640px] items-stretch pb-[env(safe-area-inset-bottom)]">
-			{#each tabs as tab}
+			{#each tabs as tab (tab.href)}
+				{@const active = tab.isActive(page.url.pathname)}
 				<a
 					href={tab.href}
-					class:active={tab.isActive(page.url.pathname)}
+					class:active={active}
 					class="flex flex-1 flex-col items-center gap-1 py-2 text-muted-foreground no-underline transition-colors hover:text-foreground"
 				>
-					<tab.Icon class="size-6" />
+					<tab.Icon class="size-6 {active ? 'animate-in zoom-in-75 duration-300 motion-reduce:animate-none' : ''}" />
 					<span class="text-[10px] leading-none">{tab.label}</span>
 				</a>
 			{/each}
