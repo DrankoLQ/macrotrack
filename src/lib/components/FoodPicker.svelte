@@ -55,11 +55,11 @@
 		<ul class="flex flex-col gap-1">
 			{#each results as food (food.id)}
 				<li>
-					<Button variant="ghost" class="w-full justify-between font-normal" onclick={() => pick(food)}>
-						<span class="truncate">
-							{food.name}
-							{#if food.brand}<span class="text-xs text-muted-foreground"> · {food.brand}</span>{/if}
-						</span>
+					<Button variant="ghost" class="w-full justify-between gap-2 font-normal" onclick={() => pick(food)}>
+						<span class="min-w-0 flex-1 truncate text-left">{food.name}</span>
+						{#if food.brand}
+							<span class="max-w-[40%] shrink-0 truncate text-xs text-muted-foreground">{food.brand}</span>
+						{/if}
 						<span class="shrink-0 text-xs text-muted-foreground">{fmt(food.kcal)} kcal / {food.base}g</span>
 					</Button>
 				</li>
@@ -69,10 +69,12 @@
 	{#if selected}
 		<div class="flex flex-col gap-2.5 rounded-lg border border-border bg-card p-3">
 			<div class="flex items-center justify-between gap-2">
-				<strong class="truncate text-sm">
+				<strong class="min-w-0 flex-1 truncate text-sm">
 					{selected.name}
-					{#if selected.brand}<span class="text-xs text-muted-foreground"> · {selected.brand}</span>{/if}
 				</strong>
+				{#if selected.brand}
+					<span class="max-w-[40%] shrink-0 truncate text-xs text-muted-foreground">{selected.brand}</span>
+				{/if}
 				{#if selected.unitSize}
 				<small class="shrink-0 text-muted-foreground">1 ud = {fmt(selected.unitSize)} g</small>
 			{:else}
