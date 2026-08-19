@@ -50,7 +50,7 @@
 		<main class="flex flex-col gap-4">{@render children()}</main>
 	</div>
 
-	<nav class="fixed inset-x-0 bottom-0 z-50 border-t border-border bg-card/80 pb-[env(safe-area-inset-bottom)] backdrop-blur-xl">
+	<nav class="fixed inset-x-0 bottom-0 z-50 border-t border-border bg-card pb-[env(safe-area-inset-bottom)] backdrop-blur-xl">
 		<div class="mx-auto flex max-w-[640px]">
 			{#each tabs as tab (tab.href)}
 				{@const active = tab.isActive(page.url.pathname)}
