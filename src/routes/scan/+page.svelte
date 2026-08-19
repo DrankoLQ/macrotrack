@@ -5,6 +5,7 @@
 	import { diary } from '$lib/stores.svelte';
 	import { fetchProductByBarcode, offToFood, type OffProduct } from '$lib/openfoodfacts';
 	import { fmt, toNumber } from '$lib/format';
+	import FoodForm from '$lib/components/FoodForm.svelte';
 	import { Card, CardContent } from '$lib/components/ui/card';
 	import { Button } from '$lib/components/ui/button';
 	import { Input } from '$lib/components/ui/input';
@@ -23,9 +24,7 @@
 	let added = $state<string | null>(null);
 	let manualCode = $state('');
 	const edited = $state({ name: '', brand: '', kcal: '', protein: '', carbs: '', fat: '', fiber: '' });
-	let manualName = $state('');
-	let manualBrand = $state('');
-	const manual = $state({ kcal: '', protein: '', carbs: '', fat: '', fiber: '' });
+	const manual = $state({ name: '', brand: '', kcal: '', protein: '', carbs: '', fat: '', fiber: '' });
 
 	const hints = new Map();
 	hints.set(DecodeHintType.POSSIBLE_FORMATS, [
@@ -35,36 +34,6 @@
 		BarcodeFormat.UPC_E,
 		BarcodeFormat.CODE_128
 	]);
-
-	const display = $derived.by(() => {
-		const food = localFood;
-		if (food) {
-			return {
-				name: food.name,
-				brand: food.brand,
-				imageUrl: food.imageUrl,
-				kcal: food.kcal,
-				protein: food.protein,
-				carbs: food.carbs,
-				fat: food.fat,
-				fiber: food.fiber
-			};
-		}
-		const off = offProduct;
-		if (off) {
-			return {
-				name: off.name,
-				brand: off.brand,
-				imageUrl: off.imageUrl,
-				kcal: off.kcal,
-				protein: off.protein,
-				carbs: off.carbs,
-				fat: off.fat,
-				fiber: off.fiber
-			};
-		}
-		return null;
-	});
 
 	onDestroy(() => stopScanning());
 
@@ -118,9 +87,7 @@
 			return;
 		}
 		status = 'notfound';
-		manualName = '';
-		manualBrand = '';
-		Object.assign(manual, { kcal: '', protein: '', carbs: '', fat: '', fiber: '' });
+		Object.assign(manual, { name: '', brand: '', kcal: '', protein: '', carbs: '', fat: '', fiber: '' });
 	}
 
 	async function saveFood(food: Omit<Food, 'id'>) {
@@ -160,12 +127,12 @@
 	}
 
 	async function addManual() {
-		const name = manualName.trim();
+		const name = manual.name.trim();
 		if (!name) return;
 		await saveFood({
 			name,
 			barcode: code.trim() || undefined,
-			brand: manualBrand.trim() || undefined,
+			brand: manual.brand.trim() || undefined,
 			base: 100,
 			kcal: toNumber(manual.kcal) || 0,
 			protein: toNumber(manual.protein) || 0,
@@ -175,9 +142,7 @@
 			source: 'manual',
 			createdAt: Date.now()
 		});
-		manualName = '';
-		manualBrand = '';
-		Object.assign(manual, { kcal: '', protein: '', carbs: '', fat: '', fiber: '' });
+		Object.assign(manual, { name: '', brand: '', kcal: '', protein: '', carbs: '', fat: '', fiber: '' });
 		resetResult();
 	}
 
@@ -222,66 +187,41 @@
 	</Card>
 {/if}
 
-{#if display}
+{#if localFood || offProduct}
 	<Card>
 		<CardContent class="flex flex-col gap-3">
 			{#if offProduct}
-				<div>
-					<Label class="mb-1 block">Nombre</Label>
-					<Input bind:value={edited.name} />
-				</div>
-				<div>
-					<Label class="mb-1 block">Marca</Label>
-					<Input bind:value={edited.brand} />
-				</div>
-			{:else}
-				<h2 class="text-base font-semibold">{display.name}</h2>
-				{#if display.brand}<p class="text-sm text-muted-foreground">{display.brand}</p>{/if}
-			{/if}
-			{#if display.imageUrl}
-				<img class="h-18 w-18 rounded-lg object-cover" src={display.imageUrl} alt="" />
-			{/if}
-			{#if offProduct}
-				<p class="text-sm text-muted-foreground">Código {code} · valores por 100g (editables)</p>
-				<div class="grid grid-cols-2 gap-2">
-					<div>
-						<Label class="mb-1 block">kcal / 100g</Label>
-						<Input type="text" bind:value={edited.kcal} inputmode="decimal" />
-					</div>
-					<div>
-						<Label class="mb-1 block">Proteína / 100g</Label>
-						<Input type="text" bind:value={edited.protein} inputmode="decimal" />
-					</div>
-					<div>
-						<Label class="mb-1 block">Hidratos / 100g</Label>
-						<Input type="text" bind:value={edited.carbs} inputmode="decimal" />
-					</div>
-					<div>
-						<Label class="mb-1 block">Grasas / 100g</Label>
-						<Input type="text" bind:value={edited.fat} inputmode="decimal" />
-					</div>
-					<div>
-						<Label class="mb-1 block">Fibra / 100g</Label>
-						<Input type="text" bind:value={edited.fiber} inputmode="decimal" />
-					</div>
-				</div>
-			{:else}
-				<p class="text-sm text-muted-foreground">
-					Código {code} · {fmt(display.kcal)} kcal · P {fmt(display.protein)} · C {fmt(display.carbs)} · G {fmt(display.fat)} · F {fmt(display.fiber)} / 100g
-				</p>
-			{/if}
-			<div class="flex items-end gap-2">
-				<div class="w-28">
-					<Label class="mb-1 block">Gramos</Label>
-					<Input type="text" min="1" bind:value={grams} inputmode="decimal" />
-				</div>
-				{#if localFood}
-					<Button onclick={addFromLocal}>Añadir al diario</Button>
-				{:else}
-					<Button onclick={addFromOff}>Guardar en base de datos</Button>
+				<p class="text-sm text-muted-foreground">Código {code} · datos editables por 100g</p>
+				{#if offProduct.imageUrl}
+					<img class="h-18 w-18 rounded-lg object-cover" src={offProduct.imageUrl} alt="" />
 				{/if}
-			</div>
-			<Button variant="outline" onclick={resetResult}>Cancelar</Button>
+				<FoodForm values={edited} />
+				<div class="flex items-end gap-2">
+					<div class="w-28">
+						<Label class="mb-1 block">Gramos</Label>
+						<Input type="text" min="1" bind:value={grams} inputmode="decimal" />
+					</div>
+					<Button onclick={addFromOff}>Guardar en base de datos</Button>
+				</div>
+				<Button variant="outline" onclick={resetResult}>Cancelar</Button>
+			{:else if localFood}
+				<h2 class="text-base font-semibold">{localFood.name}</h2>
+				{#if localFood.brand}<p class="text-sm text-muted-foreground">{localFood.brand}</p>{/if}
+				{#if localFood.imageUrl}
+					<img class="h-18 w-18 rounded-lg object-cover" src={localFood.imageUrl} alt="" />
+				{/if}
+				<p class="text-sm text-muted-foreground">
+					Código {code} · {fmt(localFood.kcal)} kcal · P {fmt(localFood.protein)} · C {fmt(localFood.carbs)} · G {fmt(localFood.fat)} · F {fmt(localFood.fiber)} / 100g
+				</p>
+				<div class="flex items-end gap-2">
+					<div class="w-28">
+						<Label class="mb-1 block">Gramos</Label>
+						<Input type="text" min="1" bind:value={grams} inputmode="decimal" />
+					</div>
+					<Button onclick={addFromLocal}>Añadir al diario</Button>
+				</div>
+				<Button variant="outline" onclick={resetResult}>Cancelar</Button>
+			{/if}
 		</CardContent>
 	</Card>
 {/if}
@@ -298,36 +238,7 @@
 	<CardContent class="flex flex-col gap-3">
 		<h2 class="text-base font-semibold">Añadir manualmente</h2>
 		<p class="text-sm text-muted-foreground">Si el producto no tiene código de barras o no se encuentra, rellena los datos:</p>
-		<div>
-			<Label class="mb-1 block">Nombre</Label>
-			<Input bind:value={manualName} placeholder="Ej: Galletas de avena" />
-		</div>
-		<div>
-			<Label class="mb-1 block">Marca</Label>
-			<Input bind:value={manualBrand} placeholder="Ej: Hacendado" />
-		</div>
-		<div class="grid grid-cols-2 gap-2">
-			<div>
-				<Label class="mb-1 block">kcal / 100g</Label>
-				<Input type="text" bind:value={manual.kcal} inputmode="decimal" />
-			</div>
-			<div>
-				<Label class="mb-1 block">Proteína / 100g</Label>
-				<Input type="text" bind:value={manual.protein} inputmode="decimal" />
-			</div>
-			<div>
-				<Label class="mb-1 block">Hidratos / 100g</Label>
-				<Input type="text" bind:value={manual.carbs} inputmode="decimal" />
-			</div>
-			<div>
-				<Label class="mb-1 block">Grasas / 100g</Label>
-				<Input type="text" bind:value={manual.fat} inputmode="decimal" />
-			</div>
-			<div>
-				<Label class="mb-1 block">Fibra / 100g</Label>
-				<Input type="text" bind:value={manual.fiber} inputmode="decimal" />
-			</div>
-		</div>
-		<Button onclick={addManual} disabled={!manualName.trim()}>Guardar en base de datos</Button>
+		<FoodForm values={manual} placeholders />
+		<Button onclick={addManual} disabled={!manual.name.trim()}>Guardar en base de datos</Button>
 	</CardContent>
 </Card>
