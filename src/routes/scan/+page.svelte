@@ -22,7 +22,7 @@
 	let errorMsg = $state('');
 	let added = $state<string | null>(null);
 	let manualCode = $state('');
-	let editedName = $state('');
+	const edited = $state({ name: '', brand: '', kcal: '', protein: '', carbs: '', fat: '', fiber: '' });
 	let manualName = $state('');
 	let manualBrand = $state('');
 	const manual = $state({ kcal: '', protein: '', carbs: '', fat: '', fiber: '' });
@@ -107,7 +107,13 @@
 		}
 		offProduct = await fetchProductByBarcode(value);
 		if (offProduct) {
-			editedName = offProduct.name;
+			edited.name = offProduct.name;
+			edited.brand = offProduct.brand ?? '';
+			edited.kcal = fmt(offProduct.kcal);
+			edited.protein = fmt(offProduct.protein);
+			edited.carbs = fmt(offProduct.carbs);
+			edited.fat = fmt(offProduct.fat);
+			edited.fiber = fmt(offProduct.fiber);
 			status = 'found';
 			return;
 		}
@@ -129,8 +135,19 @@
 
 	async function addFromOff() {
 		if (!offProduct) return;
-		const name = editedName.trim() || offProduct.name;
-		const food = offToFood({ ...offProduct, name }, code);
+		const food = offToFood(
+			{
+				name: edited.name.trim() || offProduct.name,
+				brand: edited.brand.trim() || undefined,
+				kcal: toNumber(edited.kcal) || 0,
+				protein: toNumber(edited.protein) || 0,
+				carbs: toNumber(edited.carbs) || 0,
+				fat: toNumber(edited.fat) || 0,
+				fiber: toNumber(edited.fiber) || 0,
+				imageUrl: offProduct.imageUrl
+			},
+			code
+		);
 		await saveFood(food);
 		resetResult();
 	}
@@ -167,7 +184,7 @@
 	function resetResult() {
 		localFood = null;
 		offProduct = null;
-		editedName = '';
+		Object.assign(edited, { name: '', brand: '', kcal: '', protein: '', carbs: '', fat: '', fiber: '' });
 		status = 'idle';
 	}
 </script>
@@ -210,19 +227,49 @@
 		<CardContent class="flex flex-col gap-3">
 			{#if offProduct}
 				<div>
-					<Label class="mb-1 block">Nombre (editable)</Label>
-					<Input bind:value={editedName} />
+					<Label class="mb-1 block">Nombre</Label>
+					<Input bind:value={edited.name} />
+				</div>
+				<div>
+					<Label class="mb-1 block">Marca</Label>
+					<Input bind:value={edited.brand} />
 				</div>
 			{:else}
 				<h2 class="text-base font-semibold">{display.name}</h2>
+				{#if display.brand}<p class="text-sm text-muted-foreground">{display.brand}</p>{/if}
 			{/if}
-			{#if display.brand}<p class="text-sm text-muted-foreground">{display.brand}</p>{/if}
 			{#if display.imageUrl}
 				<img class="h-18 w-18 rounded-lg object-cover" src={display.imageUrl} alt="" />
 			{/if}
-			<p class="text-sm text-muted-foreground">
-				Código {code} · {fmt(display.kcal)} kcal · P {fmt(display.protein)} · C {fmt(display.carbs)} · G {fmt(display.fat)} · F {fmt(display.fiber)} / 100g
-			</p>
+			{#if offProduct}
+				<p class="text-sm text-muted-foreground">Código {code} · valores por 100g (editables)</p>
+				<div class="grid grid-cols-2 gap-2">
+					<div>
+						<Label class="mb-1 block">kcal / 100g</Label>
+						<Input type="text" bind:value={edited.kcal} inputmode="decimal" />
+					</div>
+					<div>
+						<Label class="mb-1 block">Proteína / 100g</Label>
+						<Input type="text" bind:value={edited.protein} inputmode="decimal" />
+					</div>
+					<div>
+						<Label class="mb-1 block">Hidratos / 100g</Label>
+						<Input type="text" bind:value={edited.carbs} inputmode="decimal" />
+					</div>
+					<div>
+						<Label class="mb-1 block">Grasas / 100g</Label>
+						<Input type="text" bind:value={edited.fat} inputmode="decimal" />
+					</div>
+					<div>
+						<Label class="mb-1 block">Fibra / 100g</Label>
+						<Input type="text" bind:value={edited.fiber} inputmode="decimal" />
+					</div>
+				</div>
+			{:else}
+				<p class="text-sm text-muted-foreground">
+					Código {code} · {fmt(display.kcal)} kcal · P {fmt(display.protein)} · C {fmt(display.carbs)} · G {fmt(display.fat)} · F {fmt(display.fiber)} / 100g
+				</p>
+			{/if}
 			<div class="flex items-end gap-2">
 				<div class="w-28">
 					<Label class="mb-1 block">Gramos</Label>
