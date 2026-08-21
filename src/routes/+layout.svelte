@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
 	import { page } from '$app/state';
+	import { preloadData } from '$app/navigation';
 	import favicon from '$lib/assets/favicon.svg';
 	import '../app.css';
 	import { seedIfNeeded } from '$lib/seed';
@@ -31,6 +32,10 @@
 		profileReady = true;
 		if ('serviceWorker' in navigator) {
 			navigator.serviceWorker.register('/service-worker.js');
+		}
+		// Precalienta las rutas de las pestañas para que el primer toque sea instantáneo
+		for (const tab of tabs) {
+			preloadData(tab.href).catch(() => {});
 		}
 	});
 </script>
