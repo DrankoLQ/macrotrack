@@ -43,7 +43,7 @@
 {#if profileReady && !profile.value}
 	<Onboarding />
 {:else}
-	<div class="mx-auto flex max-w-[640px] flex-col gap-4 p-4 pb-28">
+	<div class="mx-auto flex max-w-[640px] flex-col gap-4 p-4 pb-28 pt-[calc(env(safe-area-inset-top)+1rem)]">
 		<header class="flex items-center justify-center pt-1">
 			<strong class="text-lg font-bold">MacroTrack</strong>
 		</header>
