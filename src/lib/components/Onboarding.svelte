@@ -128,10 +128,10 @@
 						<strong class="text-sm">Objetivos diarios estimados</strong>
 						<ul class="mt-2 flex flex-col gap-1 text-sm">
 							<li class="flex justify-between"><span>Calorías</span><span>{fmt(preview.kcal)} kcal</span></li>
-							<li class="flex justify-between"><span>Proteínas</span><span>{fmt(preview.protein)} g</span></li>
-							<li class="flex justify-between"><span>Hidratos</span><span>{fmt(preview.carbs)} g</span></li>
 							<li class="flex justify-between"><span>Grasas</span><span>{fmt(preview.fat)} g</span></li>
+							<li class="flex justify-between"><span>Hidratos</span><span>{fmt(preview.carbs)} g</span></li>
 							<li class="flex justify-between"><span>Fibra</span><span>{fmt(preview.fiber)} g</span></li>
+							<li class="flex justify-between"><span>Proteínas</span><span>{fmt(preview.protein)} g</span></li>
 						</ul>
 					</div>
 				{:else}

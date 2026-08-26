@@ -1,3 +1,5 @@
+import type { ChartDirection } from './chart';
+
 export interface Totals {
 	kcal: number;
 	protein: number;
@@ -5,6 +7,20 @@ export interface Totals {
 	fat: number;
 	fiber: number;
 }
+
+/** Orden canónico de visualización de macros en toda la app: Calorías, Grasas, Hidratos, Fibra, Proteína. */
+export const MACROS = [
+	{ key: 'kcal', label: 'Calorías', unit: 'kcal', direction: 'max' },
+	{ key: 'fat', label: 'Grasas', unit: 'g', direction: 'max' },
+	{ key: 'carbs', label: 'Hidratos', unit: 'g', direction: 'max' },
+	{ key: 'fiber', label: 'Fibra', unit: 'g', direction: 'min' },
+	{ key: 'protein', label: 'Proteínas', unit: 'g', direction: 'min' }
+] as const satisfies readonly {
+	key: keyof Totals;
+	label: string;
+	unit: string;
+	direction: ChartDirection;
+}[];
 
 export type Sex = 'male' | 'female';
 

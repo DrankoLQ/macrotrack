@@ -50,11 +50,11 @@
 			days: byDay.map((d) => ({ date: d.date, value: d.kcal }))
 		},
 		{
-			label: 'Proteínas por día',
+			label: 'Grasas por día',
 			unit: 'g',
-			direction: 'min',
-			goal: goals.protein,
-			days: byDay.map((d) => ({ date: d.date, value: d.protein }))
+			direction: 'max',
+			goal: goals.fat,
+			days: byDay.map((d) => ({ date: d.date, value: d.fat }))
 		},
 		{
 			label: 'Hidratos por día',
@@ -64,18 +64,18 @@
 			days: byDay.map((d) => ({ date: d.date, value: d.carbs }))
 		},
 		{
-			label: 'Grasas por día',
-			unit: 'g',
-			direction: 'max',
-			goal: goals.fat,
-			days: byDay.map((d) => ({ date: d.date, value: d.fat }))
-		},
-		{
 			label: 'Fibra por día',
 			unit: 'g',
 			direction: 'min',
 			goal: goals.fiber,
 			days: byDay.map((d) => ({ date: d.date, value: d.fiber }))
+		},
+		{
+			label: 'Proteínas por día',
+			unit: 'g',
+			direction: 'min',
+			goal: goals.protein,
+			days: byDay.map((d) => ({ date: d.date, value: d.protein }))
 		}
 	]);
 
@@ -138,20 +138,20 @@
 						<p class="text-lg font-bold">{compliance.kcal}%</p>
 					</div>
 					<div class="rounded-lg bg-secondary p-3">
-						<p class="text-xs text-muted-foreground">proteína ≥ objetivo</p>
-						<p class="text-lg font-bold">{compliance.protein}%</p>
+						<p class="text-xs text-muted-foreground">grasas ≤ objetivo</p>
+						<p class="text-lg font-bold">{compliance.fat}%</p>
 					</div>
 					<div class="rounded-lg bg-secondary p-3">
 						<p class="text-xs text-muted-foreground">hidratos ≤ objetivo</p>
 						<p class="text-lg font-bold">{compliance.carbs}%</p>
 					</div>
 					<div class="rounded-lg bg-secondary p-3">
-						<p class="text-xs text-muted-foreground">grasas ≤ objetivo</p>
-						<p class="text-lg font-bold">{compliance.fat}%</p>
-					</div>
-					<div class="rounded-lg bg-secondary p-3">
 						<p class="text-xs text-muted-foreground">fibra ≥ objetivo</p>
 						<p class="text-lg font-bold">{compliance.fiber}%</p>
+					</div>
+					<div class="rounded-lg bg-secondary p-3">
+						<p class="text-xs text-muted-foreground">proteína ≥ objetivo</p>
+						<p class="text-lg font-bold">{compliance.protein}%</p>
 					</div>
 				</div>
 			</CardContent>

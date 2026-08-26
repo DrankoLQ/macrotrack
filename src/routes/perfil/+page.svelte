@@ -281,7 +281,7 @@ function weightTimeLabel(record: { createdAt: number }) {
 		{#if profileBreakdown}
 			<div class="grid gap-1 rounded-lg border border-border bg-muted/40 p-3 text-xs text-muted-foreground">
 				<p class="font-semibold text-foreground">
-					Objetivos calculados: {fmt(profileBreakdown.totals.kcal)} kcal · P {fmt(profileBreakdown.totals.protein)} g · C {fmt(profileBreakdown.totals.carbs)} g · G {fmt(profileBreakdown.totals.fat)} g · F {fmt(profileBreakdown.totals.fiber)} g
+					Objetivos calculados: {fmt(profileBreakdown.totals.kcal)} kcal · G {fmt(profileBreakdown.totals.fat)} g · C {fmt(profileBreakdown.totals.carbs)} g · F {fmt(profileBreakdown.totals.fiber)} g · P {fmt(profileBreakdown.totals.protein)} g
 				</p>
 				<p>
 					TMB (Harris-Benedict): {fmt(profileBreakdown.tmb)} kcal × {fmt(profileBreakdown.activityFactor, 3)} (actividad) = <span class="font-semibold text-foreground">{fmt(profileBreakdown.tdee)} kcal/día</span>

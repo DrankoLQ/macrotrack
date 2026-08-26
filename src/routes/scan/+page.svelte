@@ -211,7 +211,7 @@
 					<img class="h-18 w-18 rounded-lg object-cover" src={localFood.imageUrl} alt="" />
 				{/if}
 				<p class="text-sm text-muted-foreground">
-					Código {code} · {fmt(localFood.kcal)} kcal · P {fmt(localFood.protein)} · C {fmt(localFood.carbs)} · G {fmt(localFood.fat)} · F {fmt(localFood.fiber)} / 100g
+					Código {code} · {fmt(localFood.kcal)} kcal · G {fmt(localFood.fat)} · C {fmt(localFood.carbs)} · F {fmt(localFood.fiber)} · P {fmt(localFood.protein)} / 100g
 				</p>
 				<div class="flex items-end gap-2">
 					<div class="w-28">

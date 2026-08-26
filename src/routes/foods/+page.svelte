@@ -205,20 +205,20 @@
 						<Input type="text" bind:value={form.kcal} inputmode="decimal" />
 					</div>
 					<div>
-						<Label class="mb-1 block">Proteína / 100g</Label>
-						<Input type="text" bind:value={form.protein} inputmode="decimal" />
+						<Label class="mb-1 block">Grasas / 100g</Label>
+						<Input type="text" bind:value={form.fat} inputmode="decimal" />
 					</div>
 					<div>
 						<Label class="mb-1 block">Hidratos / 100g</Label>
 						<Input type="text" bind:value={form.carbs} inputmode="decimal" />
 					</div>
 					<div>
-						<Label class="mb-1 block">Grasas / 100g</Label>
-						<Input type="text" bind:value={form.fat} inputmode="decimal" />
-					</div>
-					<div>
 						<Label class="mb-1 block">Fibra / 100g</Label>
 						<Input type="text" bind:value={form.fiber} inputmode="decimal" />
+					</div>
+					<div>
+						<Label class="mb-1 block">Proteína / 100g</Label>
+						<Input type="text" bind:value={form.protein} inputmode="decimal" />
 					</div>
 				</div>
 				<Button onclick={save}>{editingId !== null ? 'Guardar cambios' : 'Guardar'}</Button>
@@ -246,7 +246,7 @@
 										{#if result.brand}<span>{result.brand} · </span>{/if}
 										{#if result.barcode}<span>{result.barcode} · </span>{/if}
 										{#if result.hasNutriments}
-											{fmt(result.kcal)} kcal · P {fmt(result.protein)} · C {fmt(result.carbs)} · G {fmt(result.fat)} · F {fmt(result.fiber)} / 100g
+											{fmt(result.kcal)} kcal · G {fmt(result.fat)} · C {fmt(result.carbs)} · F {fmt(result.fiber)} · P {fmt(result.protein)} / 100g
 										{:else}
 											sin datos nutricionales
 										{/if}
@@ -280,7 +280,7 @@
 							</strong>
 							<small class="text-xs text-muted-foreground">
 								{#if food.barcode}<span>{food.barcode} · </span>{/if}
-								{fmt(food.kcal)} kcal · P {fmt(food.protein)} · C {fmt(food.carbs)} · G {fmt(food.fat)} · F {fmt(food.fiber)} / {food.base}g{#if food.unitSize} · 1 ud = {fmt(food.unitSize)} g{/if}{#if food.source !== 'builtin'} · {food.source}{/if}
+								{fmt(food.kcal)} kcal · G {fmt(food.fat)} · C {fmt(food.carbs)} · F {fmt(food.fiber)} · P {fmt(food.protein)} / {food.base}g{#if food.unitSize} · 1 ud = {fmt(food.unitSize)} g{/if}{#if food.source !== 'builtin'} · {food.source}{/if}
 							</small>
 						</div>
 						<div class="flex shrink-0 gap-1.5">

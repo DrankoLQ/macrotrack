@@ -35,19 +35,19 @@
 		<Input type="text" bind:value={values.kcal} inputmode="decimal" />
 	</div>
 	<div>
-		<Label class="mb-1 block">Proteína / 100g</Label>
-		<Input type="text" bind:value={values.protein} inputmode="decimal" />
+		<Label class="mb-1 block">Grasas / 100g</Label>
+		<Input type="text" bind:value={values.fat} inputmode="decimal" />
 	</div>
 	<div>
 		<Label class="mb-1 block">Hidratos / 100g</Label>
 		<Input type="text" bind:value={values.carbs} inputmode="decimal" />
 	</div>
 	<div>
-		<Label class="mb-1 block">Grasas / 100g</Label>
-		<Input type="text" bind:value={values.fat} inputmode="decimal" />
-	</div>
-	<div>
 		<Label class="mb-1 block">Fibra / 100g</Label>
 		<Input type="text" bind:value={values.fiber} inputmode="decimal" />
+	</div>
+	<div>
+		<Label class="mb-1 block">Proteína / 100g</Label>
+		<Input type="text" bind:value={values.protein} inputmode="decimal" />
 	</div>
 </div>

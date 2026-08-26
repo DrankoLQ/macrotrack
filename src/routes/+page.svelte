@@ -12,20 +12,11 @@
 	import { Label } from '$lib/components/ui/label';
 	import * as Select from '$lib/components/ui/select';
 	import { Select as SelectPrimitive } from 'bits-ui';
-	import type { ChartDirection } from '$lib/chart';
-	import type { Totals } from '$lib/macros';
+	import { MACROS } from '$lib/macros';
 	import ChevronLeftIcon from '@lucide/svelte/icons/chevron-left';
 	import ChevronRightIcon from '@lucide/svelte/icons/chevron-right';
 	import PencilIcon from '@lucide/svelte/icons/pencil';
 	import Trash2Icon from '@lucide/svelte/icons/trash-2';
-
-	const macros: { key: keyof Totals; label: string; unit: string; direction: ChartDirection }[] = [
-		{ key: 'kcal', label: 'Calorías', unit: 'kcal', direction: 'max' },
-		{ key: 'protein', label: 'Proteínas', unit: 'g', direction: 'min' },
-		{ key: 'carbs', label: 'Hidratos', unit: 'g', direction: 'max' },
-		{ key: 'fat', label: 'Grasas', unit: 'g', direction: 'max' },
-		{ key: 'fiber', label: 'Fibra', unit: 'g', direction: 'min' }
-	];
 
 	const dateLabel = $derived(
 		new Date(diary.date + 'T12:00:00').toLocaleDateString('es-ES', {
@@ -109,7 +100,7 @@
 	<CardContent>
 		<h2 class="mb-3 text-base font-semibold">Totales</h2>
 		<div class="flex flex-col gap-3">
-			{#each macros as macro}
+			{#each MACROS as macro}
 				<MacroBar
 					label={macro.label}
 					value={diary.totals[macro.key]}
@@ -140,7 +131,7 @@
 					<div class="flex items-baseline justify-between gap-2 rounded-lg bg-secondary px-2.5 py-2">
 						<strong class="text-sm">{group.label}</strong>
 						<small class="text-xs text-muted-foreground">
-							{fmt(group.totals.kcal)} kcal · P {fmt(group.totals.protein)} · C {fmt(group.totals.carbs)} · G {fmt(group.totals.fat)} · F {fmt(group.totals.fiber)}
+							{fmt(group.totals.kcal)} kcal · G {fmt(group.totals.fat)} · C {fmt(group.totals.carbs)} · F {fmt(group.totals.fiber)} · P {fmt(group.totals.protein)}
 						</small>
 					</div>
 					<ul>
@@ -178,7 +169,7 @@
 									<div class="flex min-w-0 flex-col gap-0.5">
 										<strong class="text-sm">{entry.name}</strong>
 										<small class="text-xs text-muted-foreground">
-											{#if entry.units !== undefined}{fmt(entry.units)} ud · {/if}{fmt(entry.grams)} g · {fmt(entry.kcal)} kcal · P {fmt(entry.protein)} · C {fmt(entry.carbs)} · G {fmt(entry.fat)} · F {fmt(entry.fiber)}
+											{#if entry.units !== undefined}{fmt(entry.units)} ud · {/if}{fmt(entry.grams)} g · {fmt(entry.kcal)} kcal · G {fmt(entry.fat)} · C {fmt(entry.carbs)} · F {fmt(entry.fiber)} · P {fmt(entry.protein)}
 										</small>
 									</div>
 									<div class="flex shrink-0 gap-1.5">
