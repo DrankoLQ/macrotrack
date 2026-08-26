@@ -16,6 +16,7 @@ export interface Food {
 	fiber: number;
 	source: FoodSource;
 	imageUrl?: string;
+	favorite?: boolean;
 	createdAt: number;
 }
 

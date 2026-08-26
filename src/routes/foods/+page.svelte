@@ -4,6 +4,7 @@
 	import { fmt, fold, toNumber } from '$lib/format';
 	import { searchProducts, type OffSearchResult } from '$lib/openfoodfacts';
 	import ConfirmDialog from '$lib/components/ConfirmDialog.svelte';
+	import { sortFavoritesFirst } from '$lib/favorites';
 	import { Card, CardContent } from '$lib/components/ui/card';
 	import { Button } from '$lib/components/ui/button';
 	import { Input } from '$lib/components/ui/input';
@@ -11,6 +12,7 @@
 	import PencilIcon from '@lucide/svelte/icons/pencil';
 	import Trash2Icon from '@lucide/svelte/icons/trash-2';
 	import SearchIcon from '@lucide/svelte/icons/search';
+	import StarIcon from '@lucide/svelte/icons/star';
 	import XIcon from '@lucide/svelte/icons/x';
 
 	let foods: Food[] = $state([]);
@@ -40,10 +42,12 @@
 
 	const filtered = $derived.by(() => {
 		const q = fold(query);
-		if (!q) return foods;
-		return foods.filter(
-			(food) => fold(food.name).includes(q) || (food.barcode ?? '').includes(q)
-		);
+		const base = !q
+			? foods
+			: foods.filter(
+					(food) => fold(food.name).includes(q) || (food.barcode ?? '').includes(q)
+				);
+		return sortFavoritesFirst(base);
 	});
 
 	const existingBarcodes = $derived(
@@ -61,6 +65,12 @@
 	async function remove(food: Food) {
 		if (food.id === undefined) return;
 		await db.foods.delete(food.id);
+		await refresh();
+	}
+
+	async function toggleFavorite(food: Food) {
+		if (food.id === undefined) return;
+		await db.foods.update(food.id, { favorite: !food.favorite });
 		await refresh();
 	}
 
@@ -284,6 +294,16 @@
 							</small>
 						</div>
 						<div class="flex shrink-0 gap-1.5">
+							<Button
+								variant="ghost"
+								size="icon-sm"
+								class={food.favorite ? 'text-yellow-500 hover:text-yellow-500' : 'text-muted-foreground hover:text-foreground'}
+								onclick={() => toggleFavorite(food)}
+								title={food.favorite ? 'Quitar de favoritos' : 'Marcar como favorito'}
+								aria-label={food.favorite ? 'Quitar de favoritos' : 'Marcar como favorito'}
+							>
+								<StarIcon fill={food.favorite ? 'currentColor' : 'none'} />
+							</Button>
 							<Button variant="ghost" size="icon-sm" onclick={() => edit(food)} title="Editar" aria-label="Editar">
 								<PencilIcon />
 							</Button>

@@ -1,11 +1,13 @@
 <script lang="ts">
 	import { db, type Food, type MealType, MEAL_TYPES, suggestMealType } from '$lib/db';
 	import { fmt, fold, toNumber } from '$lib/format';
+	import { sortFavoritesFirst } from '$lib/favorites';
 	import { Input } from '$lib/components/ui/input';
 	import { Button } from '$lib/components/ui/button';
 	import { Label } from '$lib/components/ui/label';
 	import * as Select from '$lib/components/ui/select';
 	import { Select as SelectPrimitive } from 'bits-ui';
+	import StarIcon from '@lucide/svelte/icons/star';
 
 	let { onAdd }: { onAdd: (food: Food, grams: number, mealType: MealType, units?: number) => void } = $props();
 
@@ -19,7 +21,7 @@
 	const results = $derived.by(() => {
 		const q = fold(query);
 		if (!q) return [];
-		return foods.filter((food) => fold(food.name).includes(q)).slice(0, 8);
+		return sortFavoritesFirst(foods.filter((food) => fold(food.name).includes(q))).slice(0, 8);
 	});
 
 	$effect(() => {
@@ -64,7 +66,10 @@
 			{#each results as food (food.id)}
 				<li>
 					<Button variant="ghost" class="h-auto min-h-8 w-full items-start justify-between gap-2 py-2 font-normal" onclick={() => pick(food)}>
-						<span class="min-w-0 flex-1 whitespace-normal break-words text-left">{food.name}</span>
+						<span class="min-w-0 flex-1 whitespace-normal break-words text-left">
+							{#if food.favorite}<StarIcon class="mr-1 inline-block size-3.5 -translate-y-px text-yellow-500" fill="currentColor" />{/if}
+							{food.name}
+						</span>
 						{#if food.brand}
 							<span class="max-w-[40%] shrink-0 truncate text-xs text-muted-foreground">{food.brand}</span>
 						{/if}
