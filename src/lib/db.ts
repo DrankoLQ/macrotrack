@@ -68,6 +68,7 @@ export const db = new Dexie('macrotrack') as Dexie & {
 	foods: EntityTable<Food, 'id'>;
 	entries: EntityTable<Entry, 'id'>;
 	weights: EntityTable<Weight, 'id'>;
+	completedDays: EntityTable<{ date: string }, 'date'>;
 };
 
 db.version(1).stores({
@@ -89,3 +90,26 @@ db.version(3).stores({
 	entries: '++id, date, foodId, mealType',
 	weights: '++id, &date'
 });
+
+db.version(4).stores({
+	foods: '++id, &barcode, name',
+	entries: '++id, date, foodId, mealType',
+	weights: '++id, &date',
+	completedDays: 'date'
+});
+
+export async function setDaysComplete(dates: string[], complete: boolean) {
+	await db.transaction('rw', db.completedDays, db.entries, async () => {
+		if (!complete) {
+			await db.completedDays.bulkDelete(dates);
+			return;
+		}
+		const today = new Date().toLocaleDateString('en-CA');
+		const entries = await db.entries.where('date').anyOf(dates).toArray();
+		const withEntries = new Set(entries.map((entry) => entry.date));
+		if (dates.some((date) => date > today || !withEntries.has(date))) {
+			throw new Error('Solo puedes confirmar días con registros que no sean futuros.');
+		}
+		await db.completedDays.bulkPut(dates.map((date) => ({ date })));
+	});
+}

@@ -1,4 +1,4 @@
-import { db, suggestMealType, type Entry, type Food, type MealType, type Weight } from './db';
+import { db, setDaysComplete, suggestMealType, type Entry, type Food, type MealType, type Weight } from './db';
 import {
 	computeGoals,
 	foodAtGrams,
@@ -60,6 +60,7 @@ class DiaryStore {
 	date = $state(today());
 	entries = $state<Entry[]>([]);
 	loading = $state(false);
+	complete = $state(false);
 	totals: Totals = $derived({
 		kcal: sumTotals(this.entries, 'kcal'),
 		protein: sumTotals(this.entries, 'protein'),
@@ -69,9 +70,25 @@ class DiaryStore {
 	});
 
 	async load() {
+		const date = this.date;
 		this.loading = true;
-		this.entries = await db.entries.where('date').equals(this.date).sortBy('createdAt');
-		this.loading = false;
+		try {
+			const [entries, completedDay] = await Promise.all([
+				db.entries.where('date').equals(date).sortBy('createdAt'),
+				db.completedDays.get(date)
+			]);
+			if (this.date !== date) return;
+			this.entries = entries;
+			this.complete = completedDay !== undefined;
+		} finally {
+			if (this.date === date) this.loading = false;
+		}
+	}
+
+	async setComplete(complete: boolean) {
+		const date = this.date;
+		await setDaysComplete([date], complete);
+		if (this.date === date) this.complete = complete;
 	}
 
 	async setDate(date: string) {

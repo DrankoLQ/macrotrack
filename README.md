@@ -15,7 +15,9 @@ Sin cuentas, sin anuncios, sin sincronizar nada a la nube. Tus registros no sale
 - **Base de datos de alimentos** — catálogo inicial de 23 alimentos comunes; añade los tuyos a mano o buscando por nombre en OpenFoodFacts.
 - **Objetivos calculados para ti** — tu perfil (altura, peso, edad, sexo, actividad, objetivo) calcula tus dianas con la fórmula de Harris-Benedict: perder grasa, recomposición, mantener o ganar músculo.
 - **Registro de peso** — pesate y guarda tu peso diario (con hora); gráfica de tendencia de 30 días y últimos registros.
-- **Estadísticas** — gráficas interactivas de calorías, proteínas, hidratos y grasas de los últimos 7 o 30 días con tu objetivo de referencia; toca una barra para ver su valor. Incluye % de días que cumples cada objetivo.
+- **Días completos** — confirma explícitamente que has registrado todo el día, desde el diario o seleccionando varios días en Estadísticas. Puedes desmarcarlos; editar comidas mantiene la confirmación. Los días anteriores quedan sin confirmar hasta que los revises.
+- **Resumen semanal** — de lunes a domingo, consulta medias y acumulados de calorías, grasas, hidratos, fibra y proteínas, con la cobertura visible (por ejemplo, 6 de 7 días completos). Solo cuentan los días completos y se comparan con el objetivo de esos mismos días: un día sin registrar no aporta margen ni cuenta como cero.
+- **Detalle diario** — gráficas interactivas de la semana seleccionada o los últimos 30 días; toca una barra para ver su valor. Los registros parciales aparecen atenuados y quedan fuera del porcentaje de cumplimiento diario, que se muestra separado del balance semanal. Las comparaciones usan tus objetivos actuales.
 - **Interfaz nativa iOS** — pestañas inferiores estilo nativo, tema oscuro, instalable con un toque y usable sin conexión.
 
 ## Instalación
@@ -42,13 +44,14 @@ npm run test       # tests unitarios
 **Despliegue**: el repo trae `netlify.toml` listo (build + publish `build/` + fallback SPA). Conecta el repo a Netlify y cada `git push` re-despliega. Vale también para Cloudflare Pages (usa `static/_redirects`).
 
 ```
-src/lib/db.ts               # esquema Dexie: foods, entries, weights
+src/lib/db.ts               # esquema Dexie: foods, entries, weights, completedDays
 src/lib/seed.ts             # catálogo inicial de alimentos
 src/lib/openfoodfacts.ts    # cliente de la API pública
 src/lib/stores.svelte.ts    # estado global (diario, objetivos, perfil, peso)
 src/lib/format.ts           # utilidades numéricas (coma decimal incluida)
+src/lib/weekly.ts           # semanas naturales y balance de días completos
 src/routes/+page.svelte     # diario
-src/routes/stats/+page.svelte   # gráficas interactivas y cumplimiento
+src/routes/stats/+page.svelte   # resumen semanal, confirmación por lotes y gráficas
 src/routes/foods/+page.svelte   # base de datos de alimentos
 src/routes/scan/+page.svelte    # escáner + alta manual
 src/routes/perfil/+page.svelte  # perfil y peso

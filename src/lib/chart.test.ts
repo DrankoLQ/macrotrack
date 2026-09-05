@@ -8,6 +8,16 @@ test('barra de valor 0 mantiene altura mínima', () => {
 	assert.equal(bars[1].h, 92.6);
 });
 
+test('un día desconocido deja un hueco, no una barra de consumo cero', () => {
+	const bars = chartBars([100, null, 0], 100, 'min');
+	assert.equal(bars[1].missing, true);
+	assert.equal(bars[1].h, 0);
+	assert.equal(bars[1].over, false);
+	assert.equal(bars[2].missing, false);
+	assert.equal(bars[2].h, 1.5);
+	assert.equal(chartGoalY([100, null, 0], 100), 17.4);
+});
+
 test('over según dirección del objetivo', () => {
 	const bars = chartBars([120, 80], 100, 'max');
 	assert.equal(bars[0].over, true);

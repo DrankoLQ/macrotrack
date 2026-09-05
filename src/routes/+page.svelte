@@ -49,6 +49,20 @@
 	let editUnits = $state('1');
 	let editType = $state<MealType>('comida');
 	let confirmEntry = $state<Entry | null>(null);
+	let savingCompletion = $state(false);
+	let completionError = $state('');
+
+	async function toggleComplete() {
+		savingCompletion = true;
+		completionError = '';
+		try {
+			await diary.setComplete(!diary.complete);
+		} catch {
+			completionError = 'No se pudo guardar la confirmación. Inténtalo de nuevo.';
+		} finally {
+			savingCompletion = false;
+		}
+	}
 
 	function startEdit(entry: Entry) {
 		editingId = entry.id!;
@@ -98,7 +112,22 @@
 
 <Card>
 	<CardContent>
-		<h2 class="mb-3 text-base font-semibold">Totales</h2>
+		<div class="mb-3 flex flex-wrap items-center justify-between gap-2">
+			<h2 class="text-base font-semibold">Totales</h2>
+			<Button
+				variant={diary.complete ? 'secondary' : 'outline'}
+				size="sm"
+				aria-pressed={diary.complete}
+				disabled={diary.loading || savingCompletion || (!diary.complete && (!diary.entries.length || diary.date > today()))}
+				onclick={toggleComplete}
+			>{savingCompletion ? 'Guardando…' : diary.complete ? '✓ Día completo' : 'Marcar día completo'}</Button>
+		</div>
+		<p class="mb-3 text-xs text-muted-foreground">
+			{diary.complete
+				? 'Día confirmado. Puedes desmarcarlo si faltan comidas; editar registros mantiene la confirmación.'
+				: 'Confirma cuando hayas registrado todo el día para incluirlo en el balance semanal.'}
+		</p>
+		{#if completionError}<p role="alert" class="mb-3 text-sm text-destructive">{completionError}</p>{/if}
 		<div class="flex flex-col gap-3">
 			{#each MACROS as macro}
 				<MacroBar
