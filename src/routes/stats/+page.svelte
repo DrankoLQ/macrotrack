@@ -121,9 +121,9 @@
 						<div class="flex flex-col gap-1 py-3 first:pt-0 last:pb-0">
 							<div class="flex flex-wrap items-baseline justify-between gap-1">
 								<h3 class="text-sm font-semibold">{metric.label}</h3>
-								<p class="text-base font-bold">{fmt(metric.average!)} <span class="text-xs font-normal text-muted-foreground">{metric.unit}/día</span></p>
+								<p class="text-base font-bold {metric.withinGoal ? 'text-primary' : 'text-destructive'}">{fmt(metric.average!)} <span class="text-xs font-normal opacity-80">{metric.unit}/día</span></p>
 							</div>
-							<p class="text-xs text-muted-foreground">Objetivo diario: {fmt(metric.goal)} {metric.unit} · {metric.withinGoal ? 'Media dentro del objetivo' : metric.direction === 'max' ? 'Media por encima del objetivo' : 'Media por debajo del objetivo'}</p>
+							<p class="text-xs {metric.withinGoal ? 'text-primary' : 'text-destructive'}">Objetivo diario: {fmt(metric.goal)} {metric.unit} · {metric.withinGoal ? '✓ Media dentro del objetivo' : metric.direction === 'max' ? '✗ Media por encima del objetivo' : '✗ Media por debajo del objetivo'}</p>
 							<p class="text-xs text-muted-foreground">Acumulado: {fmt(metric.total)} / {fmt(metric.target)} {metric.unit} en {summary.completeCount} {summary.completeCount === 1 ? 'día completo' : 'días completos'}</p>
 						</div>
 					{/each}
