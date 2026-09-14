@@ -71,7 +71,11 @@ export interface RecipeItem {
 export interface Recipe {
 	id?: number;
 	name: string;
+	/** Momentos del día en los que toca esta receta; vacío = vale para cualquiera. */
+	mealTypes?: MealType[];
 	items: RecipeItem[];
+	/** Veces que se ha añadido al diario; ordena las «más usadas» del selector. */
+	uses?: number;
 	createdAt: number;
 }
 

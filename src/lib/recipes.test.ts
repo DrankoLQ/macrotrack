@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { recipeItem, recipeTotals, recipeGrams } from './recipes.ts';
+import { recipeItem, recipeTotals, recipeGrams, portionGrams, matchesMeal, mostUsed } from './recipes.ts';
 import type { Food } from './db.ts';
 
 const food = (over: Partial<Food>): Food => ({
@@ -36,4 +36,29 @@ test('los totales de la receta suman sus ingredientes', () => {
 test('una receta vacía suma cero y no rompe', () => {
 	assert.deepEqual(recipeTotals([]), { kcal: 0, fat: 0, carbs: 0, fiber: 0, protein: 0 });
 	assert.equal(recipeGrams([]), 0);
+});
+
+test('portionGrams escala la receta a la parte comida', () => {
+	const items = [recipeItem(food({ id: 1 }), 400), recipeItem(food({ id: 2 }), 200)];
+	assert.equal(portionGrams(items, 1, 3), 200);
+	assert.equal(portionGrams(items, 2, 3), 400);
+	assert.equal(portionGrams(items, 1, 1), 600);
+	assert.equal(portionGrams(items, 1, 0), 0);
+});
+
+test('el filtro por momento deja pasar las recetas sin momento marcado', () => {
+	const gazpacho = { mealTypes: ['comida', 'cena'] as const };
+	assert.equal(matchesMeal({ mealTypes: [...gazpacho.mealTypes] }, 'cena'), true);
+	assert.equal(matchesMeal({ mealTypes: [...gazpacho.mealTypes] }, 'desayuno'), false);
+	assert.equal(matchesMeal({ mealTypes: [] }, 'desayuno'), true);
+	assert.equal(matchesMeal({}, 'desayuno'), true);
+	assert.equal(matchesMeal({ mealTypes: ['cena'] }, undefined), true);
+});
+
+test('las más usadas van primero y las que nunca se usaron no salen', () => {
+	const list: { uses?: number; n: string }[] = [{ uses: 2, n: 'b' }, { n: 'sin usar' }, { uses: 9, n: 'a' }, { uses: 1, n: 'c' }, { uses: 5, n: 'd' }];
+	assert.deepEqual(mostUsed(list).map((r) => r.n), ['a', 'd', 'b']);
+	assert.deepEqual(mostUsed(list, 1).map((r) => r.n), ['a']);
+	assert.deepEqual(mostUsed([{ n: 'x' } as (typeof list)[number]]), []);
+	assert.equal(list[0].n, 'b', 'no altera el array original');
 });

@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
-	import { db, type Recipe, type RecipeItem } from '$lib/db';
+	import { db, MEAL_TYPES, type MealType, type Recipe, type RecipeItem } from '$lib/db';
 	import { fmt } from '$lib/format';
 	import { recipeGrams, recipeTotals } from '$lib/recipes';
 	import { decodeRecipe, recipeShareUrl } from '$lib/share';
@@ -71,6 +71,11 @@
 		return `${fmt(t.kcal, 0)} kcal · G ${fmt(t.fat)} · C ${fmt(t.carbs)} · F ${fmt(t.fiber)} · P ${fmt(t.protein)}`;
 	}
 
+	function mealLine(recipe: Recipe): string {
+		if (!recipe.mealTypes?.length) return 'Cualquier comida';
+		return MEAL_TYPES.filter((t) => recipe.mealTypes?.includes(t.key)).map((t) => t.label).join(', ');
+	}
+
 	function newRecipe() {
 		editing = null;
 		showForm = true;
@@ -87,7 +92,7 @@
 		editing = null;
 	}
 
-	async function save(data: { name: string; items: RecipeItem[] }) {
+	async function save(data: { name: string; mealTypes: MealType[]; items: RecipeItem[] }) {
 		if (editing?.id !== undefined) {
 			await db.recipes.update(editing.id, data);
 		} else {
@@ -148,7 +153,7 @@
 							<strong class="text-sm">{recipe.name}</strong>
 							<small class="text-xs text-muted-foreground">{macroLine(recipe)}</small>
 							<small class="text-xs text-muted-foreground">
-								1 ración · {recipe.items.length} {recipe.items.length === 1 ? 'alimento' : 'alimentos'} · {fmt(recipeGrams(recipe.items))} g · ver ingredientes
+								{mealLine(recipe)} · 1 ración · {recipe.items.length} {recipe.items.length === 1 ? 'alimento' : 'alimentos'} · {fmt(recipeGrams(recipe.items))} g · ver ingredientes
 							</small>
 						</button>
 						<div class="flex shrink-0 gap-1.5">
@@ -263,7 +268,7 @@
 		? `¿Guardar «${importing.name}» (${importing.items.length} ${importing.items.length === 1 ? 'alimento' : 'alimentos'} · ${fmt(recipeGrams(importing.items))} g) en tus recetas?`
 		: ''}
 	onConfirm={async () => {
-		if (importing) await save({ name: importing.name, items: importing.items });
+		if (importing) await save({ name: importing.name, mealTypes: [], items: importing.items });
 	}}
 	onClose={() => (importing = null)}
 />

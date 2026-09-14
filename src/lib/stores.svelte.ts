@@ -132,6 +132,7 @@ class DiaryStore {
 			...(eaten === base ? totals : scaleTotals(totals, eaten, base)),
 			createdAt: Date.now()
 		});
+		if (recipe.id !== undefined) await db.recipes.update(recipe.id, { uses: (recipe.uses ?? 0) + 1 });
 		await this.load();
 	}
 

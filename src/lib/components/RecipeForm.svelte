@@ -1,5 +1,5 @@
 <script lang="ts">
-	import type { Food, Recipe, RecipeItem } from '$lib/db';
+	import { MEAL_TYPES, type Food, type MealType, type Recipe, type RecipeItem } from '$lib/db';
 	import { fmt } from '$lib/format';
 	import { recipeGrams, recipeItem, recipeTotals } from '$lib/recipes';
 	import FoodPicker from './FoodPicker.svelte';
@@ -15,14 +15,20 @@
 	}: {
 		initial?: Recipe;
 		submitLabel?: string;
-		onSave: (data: { name: string; items: RecipeItem[] }) => void;
+		onSave: (data: { name: string; mealTypes: MealType[]; items: RecipeItem[] }) => void;
 	} = $props();
 
 	// El padre recrea el formulario con {#key}, así que basta con el valor inicial.
 	// svelte-ignore state_referenced_locally
 	let name = $state(initial?.name ?? '');
 	// svelte-ignore state_referenced_locally
+	let mealTypes = $state<MealType[]>([...(initial?.mealTypes ?? [])]);
+	// svelte-ignore state_referenced_locally
 	let items = $state<RecipeItem[]>(initial?.items.map((item) => ({ ...item })) ?? []);
+
+	function toggleMeal(key: MealType) {
+		mealTypes = mealTypes.includes(key) ? mealTypes.filter((m) => m !== key) : [...mealTypes, key];
+	}
 	let error = $state('');
 
 	const totals = $derived(recipeTotals(items));
@@ -42,7 +48,7 @@
 			error = 'Añade al menos un alimento';
 			return;
 		}
-		onSave({ name: trimmed, items: $state.snapshot(items) });
+		onSave({ name: trimmed, mealTypes: $state.snapshot(mealTypes), items: $state.snapshot(items) });
 	}
 </script>
 
@@ -53,6 +59,22 @@
 		<Input bind:value={name} placeholder="Ej: Ensalada de garbanzos" />
 		<p class="mt-1 text-xs text-muted-foreground">
 			Una receta es una ración: pon las cantidades de un solo plato.
+		</p>
+	</div>
+	<div>
+		<Label class="mb-1 block">Momento del día</Label>
+		<div class="flex flex-wrap gap-1">
+			{#each MEAL_TYPES as type}
+				<Button
+					variant={mealTypes.includes(type.key) ? 'default' : 'outline'}
+					size="sm"
+					aria-pressed={mealTypes.includes(type.key)}
+					onclick={() => toggleMeal(type.key)}
+				>{type.label}</Button>
+			{/each}
+		</div>
+		<p class="mt-1 text-xs text-muted-foreground">
+			Opcional: si no marcas ninguno, la receta aparece en todas las comidas.
 		</p>
 	</div>
 	<FoodPicker onAdd={addFood} showMealType={false} />
