@@ -20,8 +20,7 @@ export function summarizeDays(
 	completeDates: string[],
 	dates: string[],
 	today: string,
-	goals: Totals,
-	goalsFor: (date: string) => Totals = () => goals
+	goals: Totals
 ) {
 	const confirmed = new Set(completeDates);
 	const grouped = new Map<string, (Totals & { date: string })[]>();
@@ -43,14 +42,13 @@ export function summarizeDays(
 		const goal = goals[macro.key];
 		const values = complete.map((day) => day.totals![macro.key]);
 		const total = values.reduce((sum, value) => sum + value, 0);
-		const dayGoal = (date: string) => goalsFor(date)[macro.key];
-		const target = complete.reduce((sum, day) => sum + dayGoal(day.date), 0);
+		const target = goal * complete.length;
 		const meetsGoal = (value: number, goal: number) => macro.direction === 'max' ? value <= goal : value >= goal;
 		return {
 			...macro, goal, total, target,
 			average: complete.length ? total / complete.length : null,
 			withinGoal: complete.length ? meetsGoal(total, target) : null,
-			compliance: complete.length ? Math.round(complete.filter((day) => meetsGoal(day.totals![macro.key], dayGoal(day.date))).length / complete.length * 100) : null
+			compliance: complete.length ? Math.round(values.filter((value) => meetsGoal(value, goal)).length / complete.length * 100) : null
 		};
 	});
 	return { days, completeCount: complete.length, metrics };
