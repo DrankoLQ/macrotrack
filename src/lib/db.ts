@@ -93,6 +93,7 @@ export const db = new Dexie('macrotrack') as Dexie & {
 	weights: EntityTable<Weight, 'id'>;
 	completedDays: EntityTable<{ date: string }, 'date'>;
 	recipes: EntityTable<Recipe, 'id'>;
+	trainingDays: EntityTable<{ date: string }, 'date'>;
 };
 
 db.version(1).stores({
@@ -128,6 +129,15 @@ db.version(5).stores({
 	weights: '++id, &date',
 	completedDays: 'date',
 	recipes: '++id, name'
+});
+
+db.version(6).stores({
+	foods: '++id, &barcode, name',
+	entries: '++id, date, foodId, mealType',
+	weights: '++id, &date',
+	completedDays: 'date',
+	recipes: '++id, name',
+	trainingDays: 'date'
 });
 
 export async function setDaysComplete(dates: string[], complete: boolean) {

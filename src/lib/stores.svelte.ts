@@ -13,7 +13,7 @@ import {
 } from './macros';
 
 export type { Totals, Sex, ActivityLevel, Goal, Profile } from './macros';
-export { computeGoals, computeGoalsBreakdown, ACTIVITY_FACTORS, GOAL_ADJUSTMENTS } from './macros';
+export { computeGoals, computeGoalsBreakdown, dayGoals, ACTIVITY_FACTORS, GOAL_ADJUSTMENTS } from './macros';
 
 const GOALS_KEY = 'macrotrack:goals';
 
@@ -62,6 +62,7 @@ class DiaryStore {
 	entries = $state<Entry[]>([]);
 	loading = $state(false);
 	complete = $state(false);
+	training = $state(false);
 	totals: Totals = $derived({
 		kcal: sumTotals(this.entries, 'kcal'),
 		protein: sumTotals(this.entries, 'protein'),
@@ -74,13 +75,15 @@ class DiaryStore {
 		const date = this.date;
 		this.loading = true;
 		try {
-			const [entries, completedDay] = await Promise.all([
+			const [entries, completedDay, trainingDay] = await Promise.all([
 				db.entries.where('date').equals(date).sortBy('createdAt'),
-				db.completedDays.get(date)
+				db.completedDays.get(date),
+				db.trainingDays.get(date)
 			]);
 			if (this.date !== date) return;
 			this.entries = entries;
 			this.complete = completedDay !== undefined;
+			this.training = trainingDay !== undefined;
 		} finally {
 			if (this.date === date) this.loading = false;
 		}
@@ -90,6 +93,12 @@ class DiaryStore {
 		const date = this.date;
 		await setDaysComplete([date], complete);
 		if (this.date === date) this.complete = complete;
+	}
+
+	async setTraining(training: boolean) {
+		const date = this.date;
+		await (training ? db.trainingDays.put({ date }) : db.trainingDays.delete(date));
+		if (this.date === date) this.training = training;
 	}
 
 	async setDate(date: string) {

@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
 	import { db, setDaysComplete, type Entry } from '$lib/db';
-	import { goals, today } from '$lib/stores.svelte';
+	import { dayGoals, goals, profile, today } from '$lib/stores.svelte';
 	import { shiftDate, weekDates, summarizeDays } from '$lib/weekly';
 	import type { Totals } from '$lib/macros';
 	import { Card, CardContent } from '$lib/components/ui/card';
@@ -18,6 +18,8 @@
 	let range = $state<'week' | 30>('week');
 	let entries = $state<Entry[]>([]);
 	let completeDates = $state<string[]>([]);
+	let trainingDates = $state<string[]>([]);
+	const goalsFor = (date: string) => dayGoals(goals, profile.value, trainingDates.includes(date));
 	let selected = $state<string[]>([]);
 	let loading = $state(true);
 	let saving = $state(false);
@@ -29,9 +31,9 @@
 	let chartMetric = $state<keyof Totals>('kcal');
 	const dates = $derived(weekDates(weekStart));
 	const currentWeek = $derived(weekStart === weekDates(currentDate)[0]);
-	const summary = $derived(summarizeDays(entries, completeDates, dates, currentDate, goals));
+	const summary = $derived(summarizeDays(entries, completeDates, dates, currentDate, goals, goalsFor));
 	const chartDates = $derived(range === 'week' ? dates : Array.from({ length: 30 }, (_, i) => shiftDate(currentDate, i - 29)));
-	const chartSummary = $derived(summarizeDays(entries, completeDates, chartDates, currentDate, goals));
+	const chartSummary = $derived(summarizeDays(entries, completeDates, chartDates, currentDate, goals, goalsFor));
 	const chartMacro = $derived(
 		chartSummary.metrics.find((metric) => metric.key === chartMetric) ?? chartSummary.metrics[0]
 	);
@@ -59,13 +61,15 @@
 		const from = chartRange === 30 && shiftDate(asOf, -29) < start ? shiftDate(asOf, -29) : start;
 		const to = chartRange === 30 ? asOf : [shiftDate(start, 6), asOf].sort()[0];
 		try {
-			const [rows, completed] = await Promise.all([
+			const [rows, completed, training] = await Promise.all([
 				db.entries.where('date').between(from, to, true, true).toArray(),
-				db.completedDays.where('date').between(from, to, true, true).toArray()
+				db.completedDays.where('date').between(from, to, true, true).toArray(),
+				db.trainingDays.where('date').between(from, to, true, true).toArray()
 			]);
 			if (version !== loadVersion) return;
 			entries = rows;
 			completeDates = completed.map((day) => day.date);
+			trainingDates = training.map((day) => day.date);
 		} catch {
 			if (version === loadVersion) loadError = 'No se pudieron cargar los registros. Inténtalo de nuevo.';
 		} finally {

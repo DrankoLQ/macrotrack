@@ -57,6 +57,15 @@ export interface GoalsBreakdown {
 	activityFactor: number;
 	adjustment: number;
 	totals: Totals;
+	/** En déficit: el día de descanso cuenta como sedentario y la grasa baja a 0,6 g/kg. */
+	rest: Totals | null;
+}
+
+function splitMacros(kcal: number, weight: number, fatPerKg: number): Totals {
+	const protein = Math.round(weight * 2.1);
+	const fat = Math.round(weight * fatPerKg);
+	const carbs = Math.max(0, Math.round((kcal - protein * 4 - fat * 9) / 4));
+	return { kcal, protein, carbs, fat, fiber: 30 };
 }
 
 export function computeGoalsBreakdown(p: Profile): GoalsBreakdown {
@@ -67,20 +76,25 @@ export function computeGoalsBreakdown(p: Profile): GoalsBreakdown {
 	const activityFactor = ACTIVITY_FACTORS[p.activity];
 	const adjustment = GOAL_ADJUSTMENTS[p.goal ?? 'recomp'];
 	const kcal = Math.round(tmb * activityFactor + adjustment);
-	const protein = Math.round(p.weight * 2.1);
-	const fat = Math.round(p.weight * 0.9);
-	const carbs = Math.max(0, Math.round((kcal - protein * 4 - fat * 9) / 4));
+	const restKcal = Math.round(tmb * ACTIVITY_FACTORS.sedentary + adjustment);
 	return {
 		tmb,
 		tdee: tmb * activityFactor,
 		activityFactor,
 		adjustment,
-		totals: { kcal, protein, carbs, fat, fiber: 30 }
+		totals: splitMacros(kcal, p.weight, 0.9),
+		rest: adjustment < 0 && restKcal < kcal ? splitMacros(restKcal, p.weight, 0.6) : null
 	};
 }
 
 export function computeGoals(p: Profile): Totals {
 	return computeGoalsBreakdown(p).totals;
+}
+
+/** En déficit, el día de descanso (sin marcar como entreno) usa el objetivo de descanso del perfil. */
+export function dayGoals(goals: Totals, profile: Profile | null, training: boolean): Totals {
+	if (training || !profile) return goals;
+	return computeGoalsBreakdown(profile).rest ?? goals;
 }
 
 export function foodAtGrams(food: Totals & { base: number }, grams: number): Totals {

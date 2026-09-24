@@ -458,6 +458,11 @@
 					<p>
 						Carbohidratos: ({fmt(profileBreakdown.totals.kcal)} − {fmt(profileBreakdown.totals.protein * 4)} − {fmt(profileBreakdown.totals.fat * 9)}) ÷ 4 = <span class="font-semibold text-foreground">{fmt(profileBreakdown.totals.carbs)} g</span>
 					</p>
+					{#if profileBreakdown.rest}
+						<p class="mt-1">
+							Día de descanso (sin marcar como entreno): {fmt(profileBreakdown.tmb)} × 1,2 (sedentario) {fmt(profileBreakdown.adjustment)} = <span class="font-semibold text-foreground">{fmt(profileBreakdown.rest.kcal)} kcal</span>, grasa {fmt(effectiveWeight)} kg × 0.6 = {fmt(profileBreakdown.rest.fat)} g, hidratos {fmt(profileBreakdown.rest.carbs)} g
+						</p>
+					{/if}
 				</div>
 			</details>
 		{:else}

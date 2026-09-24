@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
-	import { diary, goals, today } from '$lib/stores.svelte';
+	import { dayGoals, diary, goals as baseGoals, profile, today } from '$lib/stores.svelte';
 	import { fmt, toNumber } from '$lib/format';
 	import { MEAL_TYPES, suggestMealType, type Entry, type Food, type MealType, type Recipe } from '$lib/db';
 	import MacroBar from '$lib/components/MacroBar.svelte';
@@ -50,6 +50,9 @@
 			};
 		})
 	);
+
+	const goals = $derived(dayGoals(baseGoals, profile.value, diary.training));
+	const restGoals = $derived(dayGoals(baseGoals, profile.value, false));
 
 	const kcalRemaining = $derived(goals.kcal - diary.totals.kcal);
 	const kcalOver = $derived(kcalRemaining < 0);
@@ -205,6 +208,19 @@
 					? 'Día confirmado. Puedes desmarcarlo si faltan comidas; editar registros mantiene la confirmación.'
 					: 'Confirma cuando hayas registrado todo el día para incluirlo en el balance semanal.'}
 			</p>
+		{/if}
+		{#if restGoals !== baseGoals}
+			<label class="mb-4 flex items-center gap-2 text-sm">
+				<input
+					type="checkbox"
+					class="size-4 accent-primary"
+					checked={diary.training}
+					disabled={diary.loading}
+					onchange={(event) => diary.setTraining(event.currentTarget.checked)}
+				/>
+				Día de entreno
+				<span class="text-xs text-muted-foreground">({fmt(baseGoals.kcal)} kcal; descanso {fmt(restGoals.kcal)} kcal)</span>
+			</label>
 		{/if}
 		{#if completionError}<p role="alert" class="mb-4 text-sm text-destructive">{completionError}</p>{/if}
 		<p class="text-xs text-muted-foreground">{kcalOver ? 'Excedidas' : 'Restantes'}</p>

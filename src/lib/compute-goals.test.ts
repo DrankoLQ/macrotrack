@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { computeGoals } from './macros.ts';
+import { computeGoals, dayGoals } from './macros.ts';
 
 test('computeGoals hombre moderado/recomp: TMB 1695.667 → 2378 kcal', () => {
 	const g = computeGoals({ height: 175, weight: 70, age: 30, sex: 'male', activity: 'moderate', goal: 'recomp' });
@@ -37,4 +37,21 @@ test('computeGoals actividad alta da más kcal que sedentaria', () => {
 test('computeGoals carbs nunca negativo', () => {
 	const g = computeGoals({ height: 150, weight: 250, age: 90, sex: 'female', activity: 'sedentary', goal: 'lose' });
 	assert.ok(g.carbs >= 0);
+});
+test('dayGoals: en déficit, reparto entreno/descanso del prompt (88,6 kg → 2490/1850)', () => {
+	// TMB ≈ 1865 (175 cm, 44 años): entreno = TMB × 1,55 − 400, descanso = TMB × 1,2 − 400
+	const p = { height: 175, weight: 88.6, age: 44, sex: 'male', activity: 'moderate', goal: 'lose' } as const;
+	const training = computeGoals(p);
+	const rest = dayGoals(training, p, false);
+	assert.ok(Math.abs(training.kcal - 2490) <= 15, `entreno ${training.kcal}`);
+	assert.ok(Math.abs(rest.kcal - 1850) <= 15, `descanso ${rest.kcal}`);
+	assert.equal(training.protein, 186);
+	assert.equal(training.fat, 80);
+	assert.equal(rest.protein, 186);
+	assert.equal(rest.fat, 53);
+	assert.equal(rest.fiber, 30);
+	assert.equal(dayGoals(training, p, true), training);
+	assert.equal(dayGoals(training, { ...p, goal: 'maintain' }, false), training);
+	assert.equal(dayGoals(training, { ...p, activity: 'sedentary' }, false), training);
+	assert.equal(dayGoals(training, null, false), training);
 });

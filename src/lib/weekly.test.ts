@@ -78,3 +78,11 @@ test('confirmar, editar y desmarcar cambia el balance sin inferir completitud po
 	assert.equal(edited.metrics[0].average, 2400);
 	assert.equal(summarizeDays(entries, [], dates, dates[6], goals).completeCount, 0);
 });
+
+test('el objetivo semanal suma el objetivo de cada día (días de entreno incluidos)', () => {
+	const complete = [dates[0], dates[1]];
+	const goalsFor = (date: string) => (date === dates[0] ? { ...goals, kcal: 2400 } : goals);
+	const result = summarizeDays([entry(dates[0], 2300), entry(dates[1], 2300)], complete, dates, dates[6], goals, goalsFor);
+	assert.equal(result.metrics[0].target, 4600);
+	assert.equal(result.metrics[0].compliance, 50);
+});
