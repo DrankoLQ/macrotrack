@@ -8,6 +8,17 @@ export interface Totals {
 	fiber: number;
 }
 
+export type OptionalNutrients = { saturatedFat?: number; sugars?: number };
+
+export type NutrientValues = Totals & OptionalNutrients;
+
+export type ConsumptionTotals = Totals & {
+	saturatedFat: number | null;
+	sugars: number | null;
+};
+
+export type SubNutrientKey = 'saturatedFat' | 'sugars';
+
 /** Orden canónico de visualización de macros en toda la app: Calorías, Grasas, Hidratos, Fibra, Proteína. */
 export const MACROS = [
 	{ key: 'kcal', label: 'Calorías', unit: 'kcal', direction: 'max' },
@@ -83,14 +94,22 @@ export function computeGoals(p: Profile): Totals {
 	return computeGoalsBreakdown(p).totals;
 }
 
-export function foodAtGrams(food: Totals & { base: number }, grams: number): Totals {
+function scaleOptionalNutrients(values: OptionalNutrients, factor: number): OptionalNutrients {
+	return {
+		...(values.saturatedFat === undefined ? {} : { saturatedFat: values.saturatedFat * factor }),
+		...(values.sugars === undefined ? {} : { sugars: values.sugars * factor })
+	};
+}
+
+export function foodAtGrams(food: NutrientValues & { base: number }, grams: number): NutrientValues {
 	const factor = grams / food.base;
 	return {
 		kcal: food.kcal * factor,
 		protein: food.protein * factor,
 		carbs: food.carbs * factor,
 		fat: food.fat * factor,
-		fiber: food.fiber * factor
+		fiber: food.fiber * factor,
+		...scaleOptionalNutrients(food, factor)
 	};
 }
 
@@ -98,13 +117,45 @@ export function sumTotals(entries: Array<Partial<Totals>>, key: keyof Totals): n
 	return entries.reduce((acc, entry) => acc + (entry[key] ?? 0), 0);
 }
 
-export function scaleTotals(entry: Totals, grams: number, prevGrams: number): Totals {
+function sumKnown(entries: NutrientValues[], key: SubNutrientKey): number | null {
+	return entries.some((entry) => entry[key] === undefined)
+		? null
+		: entries.reduce((sum, entry) => sum + entry[key]!, 0);
+}
+
+export function sumConsumption(entries: NutrientValues[]): ConsumptionTotals {
+	return {
+		kcal: sumTotals(entries, 'kcal'),
+		protein: sumTotals(entries, 'protein'),
+		carbs: sumTotals(entries, 'carbs'),
+		fat: sumTotals(entries, 'fat'),
+		fiber: sumTotals(entries, 'fiber'),
+		saturatedFat: sumKnown(entries, 'saturatedFat'),
+		sugars: sumKnown(entries, 'sugars')
+	};
+}
+
+export function snapshotTotals(totals: ConsumptionTotals): NutrientValues {
+	const { saturatedFat, sugars, ...old } = totals;
+	return {
+		...old,
+		...(saturatedFat === null ? {} : { saturatedFat }),
+		...(sugars === null ? {} : { sugars })
+	};
+}
+
+export function saturatedFatLimit(kcal: number): number {
+	return kcal * 0.10 / 9;
+}
+
+export function scaleTotals(entry: NutrientValues, grams: number, prevGrams: number): NutrientValues {
 	const factor = prevGrams > 0 ? grams / prevGrams : 0;
 	return {
 		kcal: entry.kcal * factor,
 		protein: entry.protein * factor,
 		carbs: entry.carbs * factor,
 		fat: entry.fat * factor,
-		fiber: entry.fiber * factor
+		fiber: entry.fiber * factor,
+		...scaleOptionalNutrients(entry, factor)
 	};
 }

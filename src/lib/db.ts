@@ -14,6 +14,8 @@ export interface Food {
 	carbs: number;
 	fat: number;
 	fiber: number;
+	saturatedFat?: number;
+	sugars?: number;
 	source: FoodSource;
 	imageUrl?: string;
 	favorite?: boolean;
@@ -53,6 +55,8 @@ export interface Entry {
 	carbs: number;
 	fat: number;
 	fiber: number;
+	saturatedFat?: number;
+	sugars?: number;
 	createdAt: number;
 }
 
@@ -66,6 +70,8 @@ export interface RecipeItem {
 	carbs: number;
 	fat: number;
 	fiber: number;
+	saturatedFat?: number;
+	sugars?: number;
 }
 
 export interface Recipe {
