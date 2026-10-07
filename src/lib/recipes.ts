@@ -1,4 +1,4 @@
-import { foodAtGrams, sumTotals, type Totals } from './macros.ts';
+import { foodAtGrams, sumConsumption, type ConsumptionTotals } from './macros.ts';
 import type { Food, MealType, Recipe, RecipeItem } from './db';
 import { round } from './format.ts';
 
@@ -8,14 +8,8 @@ export function recipeItem(food: Food, grams: number, units?: number): RecipeIte
 	return { foodId: food.id, name: food.name, grams, units, ...foodAtGrams(food, grams) };
 }
 
-export function recipeTotals(items: RecipeItem[]): Totals {
-	return {
-		kcal: sumTotals(items, 'kcal'),
-		fat: sumTotals(items, 'fat'),
-		carbs: sumTotals(items, 'carbs'),
-		fiber: sumTotals(items, 'fiber'),
-		protein: sumTotals(items, 'protein')
-	};
+export function recipeTotals(items: RecipeItem[]): ConsumptionTotals {
+	return sumConsumption(items);
 }
 
 export function recipeGrams(items: RecipeItem[]): number {
