@@ -9,6 +9,8 @@ export interface OffProduct {
 	carbs: number;
 	fat: number;
 	fiber: number;
+	saturatedFat?: number;
+	sugars?: number;
 }
 
 function toNumber(value: unknown): number {
@@ -22,17 +24,29 @@ export async function fetchProductByBarcode(barcode: string): Promise<OffProduct
 	if (!res.ok) return null;
 	const data = await res.json();
 	if (data.status !== 1 || !data.product) return null;
-	const product = data.product;
-	const nutriments = product.nutriments ?? {};
+	return parseOffProduct(data.product);
+}
+
+function offOptional(value: unknown): number | undefined {
+	return typeof value === 'number' && Number.isFinite(value) && value >= 0 ? value : undefined;
+}
+
+export function parseOffProduct(product: Record<string, unknown>): OffProduct {
+	const nutriments = (product.nutriments ?? {}) as Record<string, unknown>;
+	// OFF normaliza _100g a gramos; _unit es la unidad introducida, no se reconvierte.
+	const saturatedFat = offOptional(nutriments['saturated-fat_100g']);
+	const sugars = offOptional(nutriments.sugars_100g);
 	return {
-		name: product.product_name ?? product.generic_name ?? 'Producto sin nombre',
-		brand: product.brands,
-		imageUrl: product.image_front_small_url,
+		name: (product.product_name ?? product.generic_name ?? 'Producto sin nombre') as string,
+		brand: product.brands as string | undefined,
+		imageUrl: product.image_front_small_url as string | undefined,
 		kcal: toNumber(nutriments['energy-kcal_100g']),
 		protein: toNumber(nutriments.proteins_100g),
 		carbs: toNumber(nutriments.carbohydrates_100g),
 		fat: toNumber(nutriments.fat_100g),
-		fiber: toNumber(nutriments.fiber_100g)
+		fiber: toNumber(nutriments.fiber_100g),
+		...(saturatedFat !== undefined ? { saturatedFat } : {}),
+		...(sugars !== undefined ? { sugars } : {})
 	};
 }
 
@@ -47,6 +61,8 @@ export function offToFood(product: OffProduct, barcode: string): Omit<Food, 'id'
 		carbs: product.carbs,
 		fat: product.fat,
 		fiber: product.fiber,
+		...(product.saturatedFat !== undefined ? { saturatedFat: product.saturatedFat } : {}),
+		...(product.sugars !== undefined ? { sugars: product.sugars } : {}),
 		source: 'openfoodfacts',
 		imageUrl: product.imageUrl,
 		createdAt: Date.now()
