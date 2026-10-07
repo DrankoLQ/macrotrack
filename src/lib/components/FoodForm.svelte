@@ -5,6 +5,7 @@
 	export interface FoodFormValues {
 		name: string;
 		brand: string;
+		unitSize: string;
 		kcal: string;
 		protein: string;
 		carbs: string;
@@ -30,6 +31,10 @@
 <div>
 	<Label class="mb-1 block">Marca</Label>
 	<Input bind:value={values.brand} placeholder={placeholders ? 'Ej: Hacendado' : undefined} />
+</div>
+<div>
+	<Label class="mb-1 block">Gramos por unidad</Label>
+	<Input type="text" bind:value={values.unitSize} inputmode="decimal" placeholder="Opcional · ej: 66 helado, 330 lata" />
 </div>
 <div class="grid grid-cols-2 gap-2">
 	<div>

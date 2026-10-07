@@ -30,8 +30,8 @@
 	let manualCode = $state('');
 	let editedError = $state('');
 	let manualError = $state('');
-	const edited = $state({ name: '', brand: '', kcal: '', protein: '', carbs: '', fat: '', fiber: '', saturatedFat: '', sugars: '' });
-	const manual = $state({ name: '', brand: '', kcal: '', protein: '', carbs: '', fat: '', fiber: '', saturatedFat: '', sugars: '' });
+	const edited = $state({ name: '', brand: '', unitSize: '', kcal: '', protein: '', carbs: '', fat: '', fiber: '', saturatedFat: '', sugars: '' });
+	const manual = $state({ name: '', brand: '', unitSize: '', kcal: '', protein: '', carbs: '', fat: '', fiber: '', saturatedFat: '', sugars: '' });
 
 	const hints = new Map();
 	hints.set(DecodeHintType.POSSIBLE_FORMATS, [
@@ -87,6 +87,7 @@
 		if (offProduct) {
 			edited.name = offProduct.name;
 			edited.brand = offProduct.brand ?? '';
+			edited.unitSize = '';
 			edited.kcal = fmt(offProduct.kcal);
 			edited.protein = fmt(offProduct.protein);
 			edited.carbs = fmt(offProduct.carbs);
@@ -98,7 +99,7 @@
 			return;
 		}
 		status = 'notfound';
-		Object.assign(manual, { name: '', brand: '', kcal: '', protein: '', carbs: '', fat: '', fiber: '', saturatedFat: '', sugars: '' });
+		Object.assign(manual, { name: '', brand: '', unitSize: '', kcal: '', protein: '', carbs: '', fat: '', fiber: '', saturatedFat: '', sugars: '' });
 	}
 
 	async function saveFood(food: Omit<Food, 'id'>) {
@@ -120,21 +121,25 @@
 			return;
 		}
 		editedError = '';
-		const food = offToFood(
-			{
-				name: edited.name.trim() || offProduct.name,
-				brand: edited.brand.trim() || undefined,
-				kcal: toNumber(edited.kcal) || 0,
-				protein: toNumber(edited.protein) || 0,
-				carbs: toNumber(edited.carbs) || 0,
-				fat: toNumber(edited.fat) || 0,
-				fiber: toNumber(edited.fiber) || 0,
-				...(saturatedFat.value === undefined ? {} : { saturatedFat: saturatedFat.value }),
-				...(sugars.value === undefined ? {} : { sugars: sugars.value }),
-				imageUrl: offProduct.imageUrl
-			},
-			code
-		);
+		const unitSize = toNumber(edited.unitSize);
+		const food = {
+			...offToFood(
+				{
+					name: edited.name.trim() || offProduct.name,
+					brand: edited.brand.trim() || undefined,
+					kcal: toNumber(edited.kcal) || 0,
+					protein: toNumber(edited.protein) || 0,
+					carbs: toNumber(edited.carbs) || 0,
+					fat: toNumber(edited.fat) || 0,
+					fiber: toNumber(edited.fiber) || 0,
+					...(saturatedFat.value === undefined ? {} : { saturatedFat: saturatedFat.value }),
+					...(sugars.value === undefined ? {} : { sugars: sugars.value }),
+					imageUrl: offProduct.imageUrl
+				},
+				code
+			),
+			...(unitSize > 0 ? { unitSize } : {})
+		};
 		await saveFood(food);
 		resetResult();
 	}
@@ -156,6 +161,7 @@
 			return;
 		}
 		manualError = '';
+		const unitSize = toNumber(manual.unitSize);
 		if (!allowDuplicate) {
 			const match = findFoodMatch(await db.foods.toArray(), name, manual.brand.trim() || undefined);
 			if (match) {
@@ -169,6 +175,7 @@
 			name,
 			barcode: code.trim() || undefined,
 			brand: manual.brand.trim() || undefined,
+			...(unitSize > 0 ? { unitSize } : {}),
 			base: 100,
 			kcal: toNumber(manual.kcal) || 0,
 			protein: toNumber(manual.protein) || 0,
@@ -180,7 +187,7 @@
 			source: 'manual',
 			createdAt: Date.now()
 		});
-		Object.assign(manual, { name: '', brand: '', kcal: '', protein: '', carbs: '', fat: '', fiber: '', saturatedFat: '', sugars: '' });
+		Object.assign(manual, { name: '', brand: '', unitSize: '', kcal: '', protein: '', carbs: '', fat: '', fiber: '', saturatedFat: '', sugars: '' });
 		resetResult();
 	}
 
@@ -193,7 +200,7 @@
 		localFood = null;
 		offProduct = null;
 		editedError = '';
-		Object.assign(edited, { name: '', brand: '', kcal: '', protein: '', carbs: '', fat: '', fiber: '', saturatedFat: '', sugars: '' });
+		Object.assign(edited, { name: '', brand: '', unitSize: '', kcal: '', protein: '', carbs: '', fat: '', fiber: '', saturatedFat: '', sugars: '' });
 		status = 'idle';
 	}
 </script>
