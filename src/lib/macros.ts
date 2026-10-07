@@ -117,10 +117,30 @@ export function sumTotals(entries: Array<Partial<Totals>>, key: keyof Totals): n
 	return entries.reduce((acc, entry) => acc + (entry[key] ?? 0), 0);
 }
 
+export interface SubNutrientTotals {
+	/** Suma de los registros con dato; `null` si ninguno lo tiene. */
+	value: number | null;
+	known: number;
+	total: number;
+}
+
+/** Suma solo los registros con dato: si `known < total`, `value` es un mínimo (los desconocidos no son cero). */
+export function sumSubNutrient(entries: NutrientValues[], key: SubNutrientKey): SubNutrientTotals {
+	let value = 0;
+	let known = 0;
+	for (const entry of entries) {
+		const amount = entry[key];
+		if (amount !== undefined) {
+			value += amount;
+			known++;
+		}
+	}
+	return { value: known > 0 ? value : null, known, total: entries.length };
+}
+
 function sumKnown(entries: NutrientValues[], key: SubNutrientKey): number | null {
-	return entries.some((entry) => entry[key] === undefined)
-		? null
-		: entries.reduce((sum, entry) => sum + entry[key]!, 0);
+	const { value, known, total } = sumSubNutrient(entries, key);
+	return known === total ? (value ?? 0) : null;
 }
 
 export function sumConsumption(entries: NutrientValues[]): ConsumptionTotals {

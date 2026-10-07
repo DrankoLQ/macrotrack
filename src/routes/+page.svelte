@@ -17,7 +17,7 @@
 	import { cn } from '$lib/utils';
 	import * as Select from '$lib/components/ui/select';
 	import { DropdownMenu, Select as SelectPrimitive } from 'bits-ui';
-	import { MACROS, sumConsumption } from '$lib/macros';
+	import { MACROS, sumConsumption, sumSubNutrient } from '$lib/macros';
 	import ChevronLeftIcon from '@lucide/svelte/icons/chevron-left';
 	import ChevronRightIcon from '@lucide/svelte/icons/chevron-right';
 	import PencilIcon from '@lucide/svelte/icons/pencil';
@@ -45,6 +45,9 @@
 			};
 		})
 	);
+
+	const saturatedFatTotals = $derived(sumSubNutrient(diary.entries, 'saturatedFat'));
+	const sugarsTotals = $derived(sumSubNutrient(diary.entries, 'sugars'));
 
 	const kcalRemaining = $derived(goals.kcal - diary.totals.kcal);
 	const kcalOver = $derived(kcalRemaining < 0);
@@ -221,13 +224,22 @@
 					unit={macro.unit}
 					direction={macro.direction}
 				/>
-				{#if macro.key === 'fat'}
-					{#if diary.totals.saturatedFat !== null}
-						<SubNutrient kind="saturatedFat" value={diary.totals.saturatedFat} limit={getSaturatedFatLimit()} />
-					{/if}
-				{:else if macro.key === 'carbs'}
-					{#if diary.totals.sugars !== null}
-						<SubNutrient kind="sugars" value={diary.totals.sugars} />
+				{#if diary.entries.length > 0}
+					{#if macro.key === 'fat'}
+						<SubNutrient
+							kind="saturatedFat"
+							value={saturatedFatTotals.value}
+							limit={getSaturatedFatLimit()}
+							known={saturatedFatTotals.known}
+							total={saturatedFatTotals.total}
+						/>
+					{:else if macro.key === 'carbs'}
+						<SubNutrient
+							kind="sugars"
+							value={sugarsTotals.value}
+							known={sugarsTotals.known}
+							total={sugarsTotals.total}
+						/>
 					{/if}
 				{/if}
 			{/each}

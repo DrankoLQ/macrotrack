@@ -5,6 +5,7 @@ import {
 	scaleTotals,
 	sumTotals,
 	sumConsumption,
+	sumSubNutrient,
 	snapshotTotals,
 	saturatedFatLimit,
 	computeGoals,
@@ -134,6 +135,17 @@ test('la incompletitud es independiente y no depende del orden de las entradas',
 	const old = sumConsumption([FOOD]);
 	assert.equal(old.saturatedFat, null);
 	assert.equal(old.sugars, null);
+});
+
+test('sumSubNutrient suma los conocidos y expone la cobertura como mínimo parcial', () => {
+	const known = { ...FOOD, saturatedFat: 2, sugars: 7 };
+	const mixed = [known, { ...FOOD, sugars: 3 }];
+	assert.deepEqual(sumSubNutrient(mixed, 'saturatedFat'), { value: 2, known: 1, total: 2 });
+	assert.deepEqual(sumSubNutrient(mixed, 'sugars'), { value: 10, known: 2, total: 2 });
+	assert.deepEqual(sumSubNutrient([FOOD], 'sugars'), { value: null, known: 0, total: 1 });
+	assert.deepEqual(sumSubNutrient([], 'sugars'), { value: null, known: 0, total: 0 });
+	assert.deepEqual(sumSubNutrient([{ ...FOOD, saturatedFat: 0 }], 'saturatedFat'), { value: 0, known: 1, total: 1 });
+	assert.equal(sumConsumption(mixed).saturatedFat, null); // el agregado estricto no cambia
 });
 
 test('cero conocido no se confunde con ausente en el agregado', () => {
