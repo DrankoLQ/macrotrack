@@ -107,22 +107,20 @@
 
 {#snippet subSummary(period: ReturnType<typeof summarizeDays>, kind: SubNutrientKey)}
 	{@const metric = period.subMetrics[kind]}
-	<div class="ml-3 rounded-lg border border-border p-2">
-		<p class="mb-1 text-xs text-muted-foreground">Media diaria · cobertura {metric.eligibleCount}/{metric.completeCount} días completos con datos</p>
-		{#if kind === 'saturatedFat'}
-			<SubNutrient kind="saturatedFat" value={metric.average} limit={getSaturatedFatLimit()} />
-			{@const saturated = period.subMetrics.saturatedFat}
-			<p class="mt-1 text-xs text-muted-foreground">
-				{#if saturated.compliance === null}
-					Cumplimiento: Sin datos completos
-				{:else}
-					Cumplimiento del máximo: {fmt(saturated.compliance)} % · {saturated.withinLimitCount}/{saturated.eligibleCount} días evaluables
-				{/if}
-			</p>
-		{:else}
-			<SubNutrient kind="sugars" value={metric.average} />
-		{/if}
-	</div>
+	{#if metric.eligibleCount > 0}
+		<div class="ml-3 rounded-lg border border-border p-2">
+			<p class="mb-1 text-xs text-muted-foreground">Media diaria · cobertura {metric.eligibleCount}/{metric.completeCount} días completos con datos</p>
+			{#if kind === 'saturatedFat'}
+				{@const saturated = period.subMetrics.saturatedFat}
+				<SubNutrient kind="saturatedFat" value={metric.average!} limit={getSaturatedFatLimit()} />
+				<p class="mt-1 text-xs text-muted-foreground">
+					Cumplimiento del máximo: {fmt(saturated.compliance!)} % · {saturated.withinLimitCount}/{saturated.eligibleCount} días evaluables
+				</p>
+			{:else}
+				<SubNutrient kind="sugars" value={metric.average!} />
+			{/if}
+		</div>
+	{/if}
 {/snippet}
 
 <svelte:window onfocus={refreshDate} />
@@ -229,15 +227,21 @@
 					goalLabel={chartMacro.key === 'saturatedFat' ? 'Máximo' : 'Objetivo'}
 				/>
 			{/if}
-			<h3 class="text-sm font-semibold">Medias y cobertura · {range === 'week' ? 'semana seleccionada' : 'últimos 30 días'}</h3>
-			<div>
-				<p class="mb-1 text-xs text-muted-foreground">Desglose de grasas</p>
-				{@render subSummary(chartSummary, 'saturatedFat')}
-			</div>
-			<div>
-				<p class="mb-1 text-xs text-muted-foreground">Desglose de hidratos</p>
-				{@render subSummary(chartSummary, 'sugars')}
-			</div>
+			{#if chartSummary.subMetrics.saturatedFat.eligibleCount > 0 || chartSummary.subMetrics.sugars.eligibleCount > 0}
+				<h3 class="text-sm font-semibold">Medias y cobertura · {range === 'week' ? 'semana seleccionada' : 'últimos 30 días'}</h3>
+				{#if chartSummary.subMetrics.saturatedFat.eligibleCount > 0}
+					<div>
+						<p class="mb-1 text-xs text-muted-foreground">Desglose de grasas</p>
+						{@render subSummary(chartSummary, 'saturatedFat')}
+					</div>
+				{/if}
+				{#if chartSummary.subMetrics.sugars.eligibleCount > 0}
+					<div>
+						<p class="mb-1 text-xs text-muted-foreground">Desglose de hidratos</p>
+						{@render subSummary(chartSummary, 'sugars')}
+					</div>
+				{/if}
+			{/if}
 		</CardContent>
 	</Card>
 

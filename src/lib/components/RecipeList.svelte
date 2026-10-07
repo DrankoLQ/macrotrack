@@ -208,8 +208,12 @@
 				<span class="text-muted-foreground"> · {macroLine(detail)}</span>
 			</p>
 			{#if detailTotals}
-				<p class="pl-2 text-xs text-muted-foreground">Grasas saturadas: {detailTotals.saturatedFat === null ? 'Sin datos completos' : `${fmt(detailTotals.saturatedFat)} g`} / ración</p>
-				<p class="pl-2 text-xs text-muted-foreground">Azúcares totales: {detailTotals.sugars === null ? 'Sin datos completos' : `${fmt(detailTotals.sugars)} g`} / ración</p>
+				{#if detailTotals.saturatedFat !== null}
+					<p class="pl-2 text-xs text-muted-foreground">Grasas saturadas: {fmt(detailTotals.saturatedFat)} g / ración</p>
+				{/if}
+				{#if detailTotals.sugars !== null}
+					<p class="pl-2 text-xs text-muted-foreground">Azúcares totales: {fmt(detailTotals.sugars)} g / ración</p>
+				{/if}
 			{/if}
 			<div class="flex justify-end gap-2">
 				<Button variant="outline" onclick={() => detail && share(detail)}>
