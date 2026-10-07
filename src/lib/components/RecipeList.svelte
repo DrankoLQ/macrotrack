@@ -272,8 +272,12 @@
 	message={importing
 		? `¿Guardar «${importing.name}» (${importing.items.length} ${importing.items.length === 1 ? 'alimento' : 'alimentos'} · ${fmt(recipeGrams(importing.items))} g) en tus recetas?`
 		: ''}
+	confirmLabel="Guardar receta"
 	onConfirm={async () => {
-		if (importing) await save({ name: importing.name, mealTypes: [], items: importing.items });
+		if (importing) {
+			const data = $state.snapshot(importing);
+			await save({ name: data.name, mealTypes: [], items: data.items });
+		}
 	}}
 	onClose={() => (importing = null)}
 />
