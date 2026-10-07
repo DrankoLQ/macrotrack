@@ -1,9 +1,10 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
-	import { diary, goals, today } from '$lib/stores.svelte';
+	import { diary, goals, today, getSaturatedFatLimit } from '$lib/stores.svelte';
 	import { fmt, toNumber } from '$lib/format';
 	import { MEAL_TYPES, suggestMealType, type Entry, type Food, type MealType, type Recipe } from '$lib/db';
 	import MacroBar from '$lib/components/MacroBar.svelte';
+	import SubNutrient from '$lib/components/SubNutrient.svelte';
 	import FoodPicker from '$lib/components/FoodPicker.svelte';
 	import RecipePicker from '$lib/components/RecipePicker.svelte';
 	import ConfirmDialog from '$lib/components/ConfirmDialog.svelte';
@@ -16,7 +17,7 @@
 	import { cn } from '$lib/utils';
 	import * as Select from '$lib/components/ui/select';
 	import { DropdownMenu, Select as SelectPrimitive } from 'bits-ui';
-	import { MACROS } from '$lib/macros';
+	import { MACROS, sumConsumption } from '$lib/macros';
 	import ChevronLeftIcon from '@lucide/svelte/icons/chevron-left';
 	import ChevronRightIcon from '@lucide/svelte/icons/chevron-right';
 	import PencilIcon from '@lucide/svelte/icons/pencil';
@@ -40,13 +41,7 @@
 			return {
 				...type,
 				entries,
-				totals: {
-					kcal: entries.reduce((acc, e) => acc + e.kcal, 0),
-					protein: entries.reduce((acc, e) => acc + e.protein, 0),
-					carbs: entries.reduce((acc, e) => acc + e.carbs, 0),
-					fat: entries.reduce((acc, e) => acc + e.fat, 0),
-					fiber: entries.reduce((acc, e) => acc + e.fiber, 0)
-				}
+				totals: sumConsumption(entries)
 			};
 		})
 	);
@@ -226,6 +221,11 @@
 					unit={macro.unit}
 					direction={macro.direction}
 				/>
+				{#if macro.key === 'fat'}
+					<SubNutrient kind="saturatedFat" value={diary.totals.saturatedFat} limit={getSaturatedFatLimit()} />
+				{:else if macro.key === 'carbs'}
+					<SubNutrient kind="sugars" value={diary.totals.sugars} />
+				{/if}
 			{/each}
 		</div>
 	</CardContent>
@@ -253,6 +253,8 @@
 						<small class="block text-xs text-muted-foreground">
 							{fmt(group.totals.kcal)} kcal · G {fmt(group.totals.fat)} · C {fmt(group.totals.carbs)} · F {fmt(group.totals.fiber)} · P {fmt(group.totals.protein)}
 						</small>
+						<SubNutrient kind="saturatedFat" value={group.totals.saturatedFat} limit={getSaturatedFatLimit()} />
+						<SubNutrient kind="sugars" value={group.totals.sugars} />
 					{:else}
 						<small class="block text-xs text-muted-foreground">Sin registros</small>
 					{/if}
@@ -301,6 +303,8 @@
 											<small class="truncate text-xs text-muted-foreground">
 												{fmt(entry.kcal)} kcal · G {fmt(entry.fat)} · C {fmt(entry.carbs)} · F {fmt(entry.fiber)} · P {fmt(entry.protein)}
 											</small>
+											<SubNutrient kind="saturatedFat" value={entry.saturatedFat ?? null} limit={getSaturatedFatLimit()} />
+											<SubNutrient kind="sugars" value={entry.sugars ?? null} />
 										</div>
 										<DropdownMenu.Root>
 											<DropdownMenu.Trigger>

@@ -2,6 +2,7 @@
 	import { onMount } from 'svelte';
 	import { deleteFood, db, type Food } from '$lib/db';
 	import { fmt, fold, toNumber } from '$lib/format';
+	import { parseOptionalNutrient } from '$lib/nutrient-input';
 	import { findFoodMatch } from '$lib/foodmatch';
 	import ConfirmDialog from '$lib/components/ConfirmDialog.svelte';
 	import { sortFavoritesFirst } from '$lib/favorites';
@@ -34,7 +35,9 @@
 		protein: '',
 		carbs: '',
 		fat: '',
-		fiber: ''
+		fiber: '',
+		saturatedFat: '',
+		sugars: ''
 	});
 
 	const filtered = $derived.by(() => {
@@ -94,6 +97,12 @@
 	async function save() {
 		const name = form.name.trim();
 		if (!name) return;
+		const saturatedFat = parseOptionalNutrient(form.saturatedFat);
+		const sugars = parseOptionalNutrient(form.sugars);
+		if (!saturatedFat.ok || !sugars.ok) {
+			formError = 'Introduce cantidades finitas y no negativas, o deja el campo vacío';
+			return;
+		}
 		const data = {
 			name,
 			brand: form.brand.trim() || undefined,
@@ -104,7 +113,9 @@
 			protein: toNumber(form.protein) || 0,
 			carbs: toNumber(form.carbs) || 0,
 			fat: toNumber(form.fat) || 0,
-			fiber: toNumber(form.fiber) || 0
+			fiber: toNumber(form.fiber) || 0,
+			...(saturatedFat.value === undefined ? {} : { saturatedFat: saturatedFat.value }),
+			...(sugars.value === undefined ? {} : { sugars: sugars.value })
 		};
 		formError = '';
 		duplicate = null;
@@ -118,7 +129,11 @@
 		allowDuplicate = false;
 		try {
 			if (editingId !== null) {
-				await db.foods.update(editingId, data);
+				await db.foods.where('id').equals(editingId).modify((food) => {
+					Object.assign(food, data);
+					if (saturatedFat.value === undefined) delete food.saturatedFat;
+					if (sugars.value === undefined) delete food.sugars;
+				});
 			} else {
 				await db.foods.add({ ...data, source: 'manual', createdAt: Date.now() });
 			}
@@ -126,7 +141,7 @@
 			formError = 'Ya existe un alimento con ese código de barras';
 			return;
 		}
-		Object.assign(form, { name: '', brand: '', barcode: '', unitSize: '', kcal: '', protein: '', carbs: '', fat: '', fiber: '' });
+		Object.assign(form, { name: '', brand: '', barcode: '', unitSize: '', kcal: '', protein: '', carbs: '', fat: '', fiber: '', saturatedFat: '', sugars: '' });
 		editingId = null;
 		showForm = false;
 		saved = name;
@@ -146,7 +161,9 @@
 			protein: String(food.protein),
 			carbs: String(food.carbs),
 			fat: String(food.fat),
-			fiber: String(food.fiber)
+			fiber: String(food.fiber),
+			saturatedFat: food.saturatedFat === undefined ? '' : String(food.saturatedFat),
+			sugars: food.sugars === undefined ? '' : String(food.sugars)
 		});
 		formError = '';
 		showForm = true;
@@ -155,6 +172,7 @@
 
 	function cancel() {
 		editingId = null;
+		Object.assign(form, { name: '', brand: '', barcode: '', unitSize: '', kcal: '', protein: '', carbs: '', fat: '', fiber: '', saturatedFat: '', sugars: '' });
 		formError = '';
 		duplicate = null;
 		allowDuplicate = false;
@@ -219,10 +237,18 @@
 					<div>
 						<Label class="mb-1 block">Grasas / 100g</Label>
 						<Input type="text" bind:value={form.fat} inputmode="decimal" />
+						<div class="mt-2 pl-2">
+							<Label class="mb-1 block text-xs text-muted-foreground">Grasas saturadas / 100g</Label>
+							<Input type="text" bind:value={form.saturatedFat} inputmode="decimal" placeholder="Desconocido" />
+						</div>
 					</div>
 					<div>
 						<Label class="mb-1 block">Hidratos / 100g</Label>
 						<Input type="text" bind:value={form.carbs} inputmode="decimal" />
+						<div class="mt-2 pl-2">
+							<Label class="mb-1 block text-xs text-muted-foreground">Azúcares totales / 100g</Label>
+							<Input type="text" bind:value={form.sugars} inputmode="decimal" placeholder="Desconocido" />
+						</div>
 					</div>
 					<div>
 						<Label class="mb-1 block">Fibra / 100g</Label>
@@ -260,6 +286,8 @@
 								{#if food.barcode}<span>{food.barcode} · </span>{/if}
 								{fmt(food.kcal)} kcal · G {fmt(food.fat)} · C {fmt(food.carbs)} · F {fmt(food.fiber)} · P {fmt(food.protein)} / {food.base}g{#if food.unitSize} · 1 ud = {fmt(food.unitSize)} g{/if}{#if food.source !== 'builtin'} · {food.source}{/if}
 							</small>
+							<small class="pl-2 text-xs text-muted-foreground">Grasas saturadas: {food.saturatedFat === undefined ? 'Sin datos completos' : `${fmt(food.saturatedFat)} g`} / {food.base}g</small>
+							<small class="pl-2 text-xs text-muted-foreground">Azúcares totales: {food.sugars === undefined ? 'Sin datos completos' : `${fmt(food.sugars)} g`} / {food.base}g</small>
 							<small class="text-xs text-muted-foreground">{usedIn(food)}</small>
 						</div>
 						<div class="flex shrink-0 gap-1.5">

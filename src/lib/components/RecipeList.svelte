@@ -26,6 +26,7 @@
 	let qrBox = $state<HTMLDivElement | null>(null);
 	let importing = $state<{ name: string; items: RecipeItem[] } | null>(null);
 	let importError = $state('');
+	const detailTotals = $derived(detail ? recipeTotals(detail.items) : null);
 	const canShare = typeof navigator !== 'undefined' && typeof navigator.share === 'function';
 
 	$effect(() => {
@@ -206,6 +207,10 @@
 				<strong>Ración</strong>
 				<span class="text-muted-foreground"> · {macroLine(detail)}</span>
 			</p>
+			{#if detailTotals}
+				<p class="pl-2 text-xs text-muted-foreground">Grasas saturadas: {detailTotals.saturatedFat === null ? 'Sin datos completos' : `${fmt(detailTotals.saturatedFat)} g`} / ración</p>
+				<p class="pl-2 text-xs text-muted-foreground">Azúcares totales: {detailTotals.sugars === null ? 'Sin datos completos' : `${fmt(detailTotals.sugars)} g`} / ración</p>
+			{/if}
 			<div class="flex justify-end gap-2">
 				<Button variant="outline" onclick={() => detail && share(detail)}>
 					<Share2Icon />
@@ -267,8 +272,12 @@
 	message={importing
 		? `¿Guardar «${importing.name}» (${importing.items.length} ${importing.items.length === 1 ? 'alimento' : 'alimentos'} · ${fmt(recipeGrams(importing.items))} g) en tus recetas?`
 		: ''}
+	confirmLabel="Guardar receta"
 	onConfirm={async () => {
-		if (importing) await save({ name: importing.name, mealTypes: [], items: importing.items });
+		if (importing) {
+			const data = $state.snapshot(importing);
+			await save({ name: data.name, mealTypes: [], items: data.items });
+		}
 	}}
 	onClose={() => (importing = null)}
 />

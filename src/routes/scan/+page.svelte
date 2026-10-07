@@ -4,6 +4,7 @@
 	import { db, type Food } from '$lib/db';
 	import { diary } from '$lib/stores.svelte';
 	import { fetchProductByBarcode, offToFood, type OffProduct } from '$lib/openfoodfacts';
+	import { parseOptionalNutrient } from '$lib/nutrient-input';
 	import { findFoodMatch } from '$lib/foodmatch';
 	import { fmt, toNumber } from '$lib/format';
 	import FoodForm from '$lib/components/FoodForm.svelte';
@@ -27,8 +28,10 @@
 	let errorMsg = $state('');
 	let added = $state<{ name: string; kind: 'catalog' | 'diary' } | null>(null);
 	let manualCode = $state('');
-	const edited = $state({ name: '', brand: '', kcal: '', protein: '', carbs: '', fat: '', fiber: '' });
-	const manual = $state({ name: '', brand: '', kcal: '', protein: '', carbs: '', fat: '', fiber: '' });
+	let editedError = $state('');
+	let manualError = $state('');
+	const edited = $state({ name: '', brand: '', kcal: '', protein: '', carbs: '', fat: '', fiber: '', saturatedFat: '', sugars: '' });
+	const manual = $state({ name: '', brand: '', kcal: '', protein: '', carbs: '', fat: '', fiber: '', saturatedFat: '', sugars: '' });
 
 	const hints = new Map();
 	hints.set(DecodeHintType.POSSIBLE_FORMATS, [
@@ -71,6 +74,8 @@
 		const value = raw.trim();
 		if (!value) return;
 		code = value;
+		editedError = '';
+		manualError = '';
 		added = null;
 		stopScanning();
 		localFood = (await db.foods.where('barcode').equals(value).first()) ?? null;
@@ -87,11 +92,13 @@
 			edited.carbs = fmt(offProduct.carbs);
 			edited.fat = fmt(offProduct.fat);
 			edited.fiber = fmt(offProduct.fiber);
+			edited.saturatedFat = offProduct.saturatedFat === undefined ? '' : String(offProduct.saturatedFat);
+			edited.sugars = offProduct.sugars === undefined ? '' : String(offProduct.sugars);
 			status = 'found';
 			return;
 		}
 		status = 'notfound';
-		Object.assign(manual, { name: '', brand: '', kcal: '', protein: '', carbs: '', fat: '', fiber: '' });
+		Object.assign(manual, { name: '', brand: '', kcal: '', protein: '', carbs: '', fat: '', fiber: '', saturatedFat: '', sugars: '' });
 	}
 
 	async function saveFood(food: Omit<Food, 'id'>) {
@@ -106,6 +113,13 @@
 
 	async function addFromOff() {
 		if (!offProduct) return;
+		const saturatedFat = parseOptionalNutrient(edited.saturatedFat);
+		const sugars = parseOptionalNutrient(edited.sugars);
+		if (!saturatedFat.ok || !sugars.ok) {
+			editedError = 'Introduce cantidades finitas y no negativas, o deja el campo vacío';
+			return;
+		}
+		editedError = '';
 		const food = offToFood(
 			{
 				name: edited.name.trim() || offProduct.name,
@@ -115,6 +129,8 @@
 				carbs: toNumber(edited.carbs) || 0,
 				fat: toNumber(edited.fat) || 0,
 				fiber: toNumber(edited.fiber) || 0,
+				...(saturatedFat.value === undefined ? {} : { saturatedFat: saturatedFat.value }),
+				...(sugars.value === undefined ? {} : { sugars: sugars.value }),
 				imageUrl: offProduct.imageUrl
 			},
 			code
@@ -133,6 +149,13 @@
 	async function addManual() {
 		const name = manual.name.trim();
 		if (!name) return;
+		const saturatedFat = parseOptionalNutrient(manual.saturatedFat);
+		const sugars = parseOptionalNutrient(manual.sugars);
+		if (!saturatedFat.ok || !sugars.ok) {
+			manualError = 'Introduce cantidades finitas y no negativas, o deja el campo vacío';
+			return;
+		}
+		manualError = '';
 		if (!allowDuplicate) {
 			const match = findFoodMatch(await db.foods.toArray(), name, manual.brand.trim() || undefined);
 			if (match) {
@@ -152,10 +175,12 @@
 			carbs: toNumber(manual.carbs) || 0,
 			fat: toNumber(manual.fat) || 0,
 			fiber: toNumber(manual.fiber) || 0,
+			...(saturatedFat.value === undefined ? {} : { saturatedFat: saturatedFat.value }),
+			...(sugars.value === undefined ? {} : { sugars: sugars.value }),
 			source: 'manual',
 			createdAt: Date.now()
 		});
-		Object.assign(manual, { name: '', brand: '', kcal: '', protein: '', carbs: '', fat: '', fiber: '' });
+		Object.assign(manual, { name: '', brand: '', kcal: '', protein: '', carbs: '', fat: '', fiber: '', saturatedFat: '', sugars: '' });
 		resetResult();
 	}
 
@@ -167,7 +192,8 @@
 	function resetResult() {
 		localFood = null;
 		offProduct = null;
-		Object.assign(edited, { name: '', brand: '', kcal: '', protein: '', carbs: '', fat: '', fiber: '' });
+		editedError = '';
+		Object.assign(edited, { name: '', brand: '', kcal: '', protein: '', carbs: '', fat: '', fiber: '', saturatedFat: '', sugars: '' });
 		status = 'idle';
 	}
 </script>
@@ -218,6 +244,9 @@
 					<img class="h-18 w-18 rounded-lg object-cover" src={offProduct.imageUrl} alt="" />
 				{/if}
 				<FoodForm values={edited} />
+				{#if editedError}<p role="alert" class="text-sm text-destructive">{editedError}</p>{/if}
+				<p class="pl-2 text-xs text-muted-foreground">OpenFoodFacts · Grasas saturadas: {offProduct.saturatedFat === undefined ? 'Sin datos completos' : `${fmt(offProduct.saturatedFat)} g`} / 100g</p>
+				<p class="pl-2 text-xs text-muted-foreground">OpenFoodFacts · Azúcares totales: {offProduct.sugars === undefined ? 'Sin datos completos' : `${fmt(offProduct.sugars)} g`} / 100g</p>
 				<div class="flex items-end gap-2">
 					<div class="w-28">
 						<Label class="mb-1 block">Gramos</Label>
@@ -238,6 +267,8 @@
 				<p class="text-sm text-muted-foreground">
 					Código {code} · {fmt(localFood.kcal)} kcal · G {fmt(localFood.fat)} · C {fmt(localFood.carbs)} · F {fmt(localFood.fiber)} · P {fmt(localFood.protein)} / 100g
 				</p>
+				<p class="pl-2 text-xs text-muted-foreground">Grasas saturadas: {localFood.saturatedFat === undefined ? 'Sin datos completos' : `${fmt(localFood.saturatedFat)} g`} / {localFood.base}g</p>
+				<p class="pl-2 text-xs text-muted-foreground">Azúcares totales: {localFood.sugars === undefined ? 'Sin datos completos' : `${fmt(localFood.sugars)} g`} / {localFood.base}g</p>
 				<div class="flex items-end gap-2">
 					<div class="w-28">
 						<Label class="mb-1 block">Gramos</Label>
@@ -264,6 +295,7 @@
 		<h2 class="text-base font-semibold">Añadir manualmente</h2>
 		<p class="text-sm text-muted-foreground">Si el producto no tiene código de barras o no se encuentra, rellena los datos:</p>
 		<FoodForm values={manual} placeholders />
+		{#if manualError}<p role="alert" class="text-sm text-destructive">{manualError}</p>{/if}
 		{#if duplicateFood}
 			<div class="rounded-lg border border-border bg-secondary p-3 text-sm">
 				<p>Ya existe «{duplicateFood.name}»{#if duplicateFood.brand} · {duplicateFood.brand}{/if} en tu base de datos.</p>

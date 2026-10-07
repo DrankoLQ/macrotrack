@@ -2,6 +2,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { recipeItem, recipeTotals, recipeGrams, portionGrams, matchesMeal, mostUsed } from './recipes.ts';
 import type { Food } from './db.ts';
+import { scaleTotals, snapshotTotals } from './macros.ts';
 
 const food = (over: Partial<Food>): Food => ({
 	name: 'Alimento', base: 100, kcal: 100, protein: 10, carbs: 20, fat: 5, fiber: 2,
@@ -29,12 +30,12 @@ test('los alimentos por unidades guardan las unidades y sus gramos', () => {
 
 test('los totales de la receta suman sus ingredientes', () => {
 	const items = [recipeItem(food({ id: 1 }), 100), recipeItem(food({ id: 2, kcal: 50, fat: 0 }), 200)];
-	assert.deepEqual(recipeTotals(items), { kcal: 200, fat: 5, carbs: 60, fiber: 6, protein: 30 });
+	assert.deepEqual(recipeTotals(items), { kcal: 200, fat: 5, carbs: 60, fiber: 6, protein: 30, saturatedFat: null, sugars: null });
 	assert.equal(recipeGrams(items), 300);
 });
 
 test('una receta vacía suma cero y no rompe', () => {
-	assert.deepEqual(recipeTotals([]), { kcal: 0, fat: 0, carbs: 0, fiber: 0, protein: 0 });
+	assert.deepEqual(recipeTotals([]), { kcal: 0, fat: 0, carbs: 0, fiber: 0, protein: 0, saturatedFat: 0, sugars: 0 });
 	assert.equal(recipeGrams([]), 0);
 });
 
@@ -44,6 +45,49 @@ test('portionGrams escala la receta a la parte comida', () => {
 	assert.equal(portionGrams(items, 2, 3), 400);
 	assert.equal(portionGrams(items, 1, 1), 600);
 	assert.equal(portionGrams(items, 1, 0), 0);
+});
+
+test('porciones conservan completitud independiente sin añadir calorías', () => {
+	const items = [
+		recipeItem(food({ saturatedFat: 2, sugars: 3 }), 100),
+		recipeItem(food({ sugars: 0 }), 200)
+	];
+	const totals = recipeTotals(items);
+	assert.equal(totals.saturatedFat, null);
+	assert.equal(totals.sugars, 3);
+	assert.equal(totals.kcal, 300);
+	const snapshot = snapshotTotals(totals);
+	assert.equal(Object.hasOwn(snapshot, 'saturatedFat'), false);
+	for (const part of [1, 2]) {
+		const grams = portionGrams(items, part, 3);
+		const portion = scaleTotals(snapshot, grams, recipeGrams(items));
+		assert.equal(Object.hasOwn(portion, 'saturatedFat'), false);
+		assert.equal(portion.sugars, part);
+		assert.equal(portion.kcal, part * 100);
+	}
+});
+
+test('receta por unidades captura datos conocidos y cero aunque cambie el catálogo', () => {
+	const catalog = food({ unitSize: 60, saturatedFat: 2, sugars: 0 });
+	const item = recipeItem(catalog, 120, 2);
+	catalog.saturatedFat = 9;
+	assert.equal(item.units, 2);
+	assert.equal(item.saturatedFat, 2.4);
+	assert.equal(item.sugars, 0);
+	const snapshot = snapshotTotals(recipeTotals([item]));
+	assert.equal(snapshot.saturatedFat, 2.4);
+	assert.equal(snapshot.sugars, 0);
+	assert.equal(scaleTotals(snapshot, 60, 120).saturatedFat, 1.2);
+});
+
+test('azúcares desconocidos no ocultan saturadas conocidas a cero', () => {
+	const totals = recipeTotals([
+		recipeItem(food({ saturatedFat: 0, sugars: 4 }), 100),
+		recipeItem(food({ saturatedFat: 0 }), 100)
+	]);
+	assert.equal(totals.saturatedFat, 0);
+	assert.equal(totals.sugars, null);
+	assert.equal(Object.hasOwn(snapshotTotals(totals), 'sugars'), false);
 });
 
 test('el filtro por momento deja pasar las recetas sin momento marcado', () => {

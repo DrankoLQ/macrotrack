@@ -10,6 +10,8 @@
 		carbs: string;
 		fat: string;
 		fiber: string;
+		saturatedFat: string;
+		sugars: string;
 	}
 
 	let {
@@ -37,10 +39,18 @@
 	<div>
 		<Label class="mb-1 block">Grasas / 100g</Label>
 		<Input type="text" bind:value={values.fat} inputmode="decimal" />
+		<div class="mt-2 pl-2">
+			<Label class="mb-1 block text-xs text-muted-foreground">Grasas saturadas / 100g</Label>
+			<Input type="text" bind:value={values.saturatedFat} inputmode="decimal" placeholder="Desconocido" />
+		</div>
 	</div>
 	<div>
 		<Label class="mb-1 block">Hidratos / 100g</Label>
 		<Input type="text" bind:value={values.carbs} inputmode="decimal" />
+		<div class="mt-2 pl-2">
+			<Label class="mb-1 block text-xs text-muted-foreground">Azúcares totales / 100g</Label>
+			<Input type="text" bind:value={values.sugars} inputmode="decimal" placeholder="Desconocido" />
+		</div>
 	</div>
 	<div>
 		<Label class="mb-1 block">Fibra / 100g</Label>

@@ -1,15 +1,18 @@
 import { db, setDaysComplete, suggestMealType, type Entry, type Food, type MealType, type Recipe, type Weight } from './db';
 import { recipeGrams, recipeTotals } from './recipes';
+import { entryNutrients } from './entry-nutrients';
 import {
 	computeGoals,
 	foodAtGrams,
 	scaleTotals,
-	sumTotals,
+	sumConsumption,
+	snapshotTotals,
+	saturatedFatLimit,
+	type ConsumptionTotals,
 	type ActivityLevel,
 	type Goal,
 	type Profile,
-	type Sex,
-	type Totals
+	type Sex
 } from './macros';
 
 export type { Totals, Sex, ActivityLevel, Goal, Profile } from './macros';
@@ -22,6 +25,10 @@ export function today(): string {
 }
 
 export const goals = $state({ kcal: 2200, protein: 140, carbs: 250, fat: 73, fiber: 30 });
+
+export function getSaturatedFatLimit(): number {
+	return saturatedFatLimit(goals.kcal);
+}
 
 export function loadGoals() {
 	try {
@@ -62,13 +69,7 @@ class DiaryStore {
 	entries = $state<Entry[]>([]);
 	loading = $state(false);
 	complete = $state(false);
-	totals: Totals = $derived({
-		kcal: sumTotals(this.entries, 'kcal'),
-		protein: sumTotals(this.entries, 'protein'),
-		carbs: sumTotals(this.entries, 'carbs'),
-		fat: sumTotals(this.entries, 'fat'),
-		fiber: sumTotals(this.entries, 'fiber')
-	});
+	totals: ConsumptionTotals = $derived(sumConsumption(this.entries));
 
 	async load() {
 		const date = this.date;
@@ -122,7 +123,7 @@ class DiaryStore {
 	 *  Si se comió más o menos que la receta entera, `grams` la escala proporcionalmente. */
 	async addRecipe(recipe: Recipe, mealType: MealType = suggestMealType(), grams?: number) {
 		const base = recipeGrams(recipe.items);
-		const totals = recipeTotals(recipe.items);
+		const totals = snapshotTotals(recipeTotals(recipe.items));
 		const eaten = grams ?? base;
 		await db.entries.add({
 			date: this.date,
@@ -144,12 +145,17 @@ class DiaryStore {
 		if (patch.units !== undefined) data = { ...data, units: patch.units };
 		if (patch.grams !== undefined) {
 			const food = entry.foodId !== undefined ? await db.foods.get(entry.foodId) : undefined;
-			data = {
-				...data,
-				...(food ? foodAtGrams(food, grams) : scaleTotals(entry, grams, entry.grams))
-			};
+			const calculated = entryNutrients(entry, grams, food);
+			await db.entries.where('id').equals(id).modify((row) => {
+				Object.assign(row, data, calculated);
+				// Omitir un campo en el patch no borra su valor anterior en Dexie.
+				for (const key of ['saturatedFat', 'sugars'] as const) {
+					if (calculated[key] === undefined) delete row[key];
+				}
+			});
+		} else {
+			await db.entries.update(id, data);
 		}
-		await db.entries.update(id, data);
 		await this.load();
 	}
 

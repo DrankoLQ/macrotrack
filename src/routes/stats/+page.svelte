@@ -1,13 +1,15 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
 	import { db, setDaysComplete, type Entry } from '$lib/db';
-	import { goals, today } from '$lib/stores.svelte';
+	import { goals, today, getSaturatedFatLimit } from '$lib/stores.svelte';
 	import { shiftDate, weekDates, summarizeDays } from '$lib/weekly';
-	import type { Totals } from '$lib/macros';
+	import type { Totals, SubNutrientKey } from '$lib/macros';
 	import { Card, CardContent } from '$lib/components/ui/card';
 	import { Button } from '$lib/components/ui/button';
 	import MacroBar from '$lib/components/MacroBar.svelte';
 	import MacroChart from '$lib/components/MacroChart.svelte';
+	import SubNutrient from '$lib/components/SubNutrient.svelte';
+	import { fmt } from '$lib/format';
 	import * as Dialog from '$lib/components/ui/dialog';
 	import ChevronLeftIcon from '@lucide/svelte/icons/chevron-left';
 	import ChevronRightIcon from '@lucide/svelte/icons/chevron-right';
@@ -26,15 +28,21 @@
 	let loadVersion = 0;
 	let daysOpen = $state(false);
 	let showHelper = $state(false);
-	let chartMetric = $state<keyof Totals>('kcal');
+	let chartMetric = $state<keyof Totals | SubNutrientKey>('kcal');
 	const dates = $derived(weekDates(weekStart));
 	const currentWeek = $derived(weekStart === weekDates(currentDate)[0]);
 	const summary = $derived(summarizeDays(entries, completeDates, dates, currentDate, goals));
 	const chartDates = $derived(range === 'week' ? dates : Array.from({ length: 30 }, (_, i) => shiftDate(currentDate, i - 29)));
 	const chartSummary = $derived(summarizeDays(entries, completeDates, chartDates, currentDate, goals));
-	const chartMacro = $derived(
-		chartSummary.metrics.find((metric) => metric.key === chartMetric) ?? chartSummary.metrics[0]
-	);
+	const chartMacro = $derived.by(() => {
+		if (chartMetric === 'saturatedFat') return {
+			key: chartMetric, label: 'Grasas saturadas', goal: getSaturatedFatLimit(), unit: 'g', direction: 'max' as const
+		};
+		if (chartMetric === 'sugars') return {
+			key: chartMetric, label: 'Azúcares totales', goal: null, unit: 'g', direction: 'max' as const
+		};
+		return chartSummary.metrics.find((metric) => metric.key === chartMetric) ?? chartSummary.metrics[0];
+	});
 	const statusLabels = { complete: 'Completo', partial: 'Parcial', empty: 'Sin registros', future: 'Futuro' };
 
 	function refreshDate() {
@@ -97,6 +105,26 @@
 	}
 </script>
 
+{#snippet subSummary(period: ReturnType<typeof summarizeDays>, kind: SubNutrientKey)}
+	{@const metric = period.subMetrics[kind]}
+	<div class="ml-3 rounded-lg border border-border p-2">
+		<p class="mb-1 text-xs text-muted-foreground">Media diaria · cobertura {metric.eligibleCount}/{metric.completeCount} días completos con datos</p>
+		{#if kind === 'saturatedFat'}
+			<SubNutrient kind="saturatedFat" value={metric.average} limit={getSaturatedFatLimit()} />
+			{@const saturated = period.subMetrics.saturatedFat}
+			<p class="mt-1 text-xs text-muted-foreground">
+				{#if saturated.compliance === null}
+					Cumplimiento: Sin datos completos
+				{:else}
+					Cumplimiento del máximo: {fmt(saturated.compliance)} % · {saturated.withinLimitCount}/{saturated.eligibleCount} días evaluables
+				{/if}
+			</p>
+		{:else}
+			<SubNutrient kind="sugars" value={metric.average} />
+		{/if}
+	</div>
+{/snippet}
+
 <svelte:window onfocus={refreshDate} />
 <svelte:document onvisibilitychange={refreshDate} />
 
@@ -154,6 +182,11 @@
 							unit={`${metric.unit}/día`}
 							direction={metric.direction}
 						/>
+						{#if metric.key === 'fat'}
+							{@render subSummary(summary, 'saturatedFat')}
+						{:else if metric.key === 'carbs'}
+							{@render subSummary(summary, 'sugars')}
+						{/if}
 					{/each}
 				</div>
 			{/if}
@@ -179,14 +212,32 @@
 						aria-pressed={chartMetric === metric.key}
 						onclick={() => (chartMetric = metric.key)}
 					>{metric.label}</Button>
+					{#if metric.key === 'fat' || metric.key === 'carbs'}
+						{@const key = metric.key === 'fat' ? 'saturatedFat' : 'sugars'}
+						<Button
+							variant={chartMetric === key ? 'secondary' : 'ghost'} size="sm"
+							class="ml-2 border-l border-border text-xs"
+							aria-pressed={chartMetric === key} onclick={() => (chartMetric = key)}
+						>{key === 'saturatedFat' ? 'Grasas saturadas' : 'Azúcares totales'}</Button>
+					{/if}
 				{/each}
 			</div>
 			{#if chartMacro}
 				<MacroChart
 					data={chartSummary.days.map((day) => ({ date: day.date, value: day.totals?.[chartMacro.key] ?? null, complete: day.status === 'complete' }))}
 					goal={chartMacro.goal} unit={chartMacro.unit} direction={chartMacro.direction}
+					goalLabel={chartMacro.key === 'saturatedFat' ? 'Máximo' : 'Objetivo'}
 				/>
 			{/if}
+			<h3 class="text-sm font-semibold">Medias y cobertura · {range === 'week' ? 'semana seleccionada' : 'últimos 30 días'}</h3>
+			<div>
+				<p class="mb-1 text-xs text-muted-foreground">Desglose de grasas</p>
+				{@render subSummary(chartSummary, 'saturatedFat')}
+			</div>
+			<div>
+				<p class="mb-1 text-xs text-muted-foreground">Desglose de hidratos</p>
+				{@render subSummary(chartSummary, 'sugars')}
+			</div>
 		</CardContent>
 	</Card>
 
@@ -201,6 +252,7 @@
 							<p class="text-xs text-muted-foreground">{metric.label} {metric.direction === 'max' ? '≤' : '≥'} objetivo</p>
 							<p class="text-lg font-bold">{metric.compliance}%</p>
 						</div>
+
 					{/each}
 				</div>
 			</CardContent>

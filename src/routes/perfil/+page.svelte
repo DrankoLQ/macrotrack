@@ -2,6 +2,7 @@
 	import {
 		computeGoalsBreakdown,
 		goals,
+		getSaturatedFatLimit,
 		today,
 		profile,
 		weights,
@@ -444,6 +445,11 @@
 						<span class="text-muted-foreground">{macro.label}</span>
 						<span class="font-semibold tabular-nums">{fmt(profileBreakdown.totals[macro.key])} {macro.unit}</span>
 					</div>
+					{#if macro.key === 'fat'}
+						<p class="ml-3 text-xs text-muted-foreground">Grasas saturadas: Máximo {fmt(getSaturatedFatLimit(), 1)} g/día (10 % de la energía).</p>
+					{:else if macro.key === 'carbs'}
+						<p class="ml-3 text-xs text-muted-foreground">Azúcares totales: cantidad informativa, sin objetivo.</p>
+					{/if}
 				{/each}
 			</div>
 			<details class="text-xs text-muted-foreground">
@@ -473,6 +479,16 @@
 			</details>
 		{:else}
 			<p class="text-xs text-muted-foreground">Rellena altura, peso y edad para calcular tus objetivos (Harris-Benedict).</p>
+			<div class="flex flex-col gap-1.5 text-sm">
+				{#each MACROS as macro}
+					<p class="flex justify-between gap-2"><span class="text-muted-foreground">{macro.label}</span><span class="font-semibold tabular-nums">{fmt(goals[macro.key])} {macro.unit}</span></p>
+					{#if macro.key === 'fat'}
+						<p class="ml-3 text-xs text-muted-foreground">Grasas saturadas: Máximo {fmt(getSaturatedFatLimit(), 1)} g/día (10 % de la energía).</p>
+					{:else if macro.key === 'carbs'}
+						<p class="ml-3 text-xs text-muted-foreground">Azúcares totales: cantidad informativa, sin objetivo.</p>
+					{/if}
+				{/each}
+			</div>
 		{/if}
 	</CardContent>
 </Card>

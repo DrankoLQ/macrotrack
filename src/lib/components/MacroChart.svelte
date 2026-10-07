@@ -8,10 +8,12 @@
 		data,
 		goal,
 		unit,
-		direction
+		direction,
+		goalLabel = 'Objetivo'
 	}: {
 		data: Day[];
-		goal: number;
+		goal: number | null;
+		goalLabel?: string;
 		unit: string;
 		direction: ChartDirection;
 	} = $props();
@@ -88,6 +90,7 @@
 			/>
 			{/if}
 		{/each}
+		{#if goalY !== null}
 		<line
 			x1="5"
 			x2="305"
@@ -98,6 +101,7 @@
 			stroke-dasharray="4 3"
 			opacity="0.6"
 		/>
+		{/if}
 	</svg>
 	{#if data.length <= 7}
 		<div class="mt-1 flex justify-between px-1 text-[10px] text-muted-foreground">
@@ -107,7 +111,9 @@
 		</div>
 	{/if}
 	<p class="mt-1 text-xs text-muted-foreground">
-		Objetivo {fmt(goal)} {unit} · línea punteada
+		{#if goalY !== null && goal !== null}
+			{goalLabel} {fmt(goal, goalLabel === 'Máximo' ? 1 : undefined)} {unit} · línea punteada
+		{/if}
 		{#if data.some((day) => day.complete === false && day.value !== null)}
 			<br />Barras atenuadas: registros parciales, excluidos del balance.
 		{/if}
