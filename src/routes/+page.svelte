@@ -222,9 +222,13 @@
 					direction={macro.direction}
 				/>
 				{#if macro.key === 'fat'}
-					<SubNutrient kind="saturatedFat" value={diary.totals.saturatedFat} limit={getSaturatedFatLimit()} />
+					{#if diary.totals.saturatedFat !== null}
+						<SubNutrient kind="saturatedFat" value={diary.totals.saturatedFat} limit={getSaturatedFatLimit()} />
+					{/if}
 				{:else if macro.key === 'carbs'}
-					<SubNutrient kind="sugars" value={diary.totals.sugars} />
+					{#if diary.totals.sugars !== null}
+						<SubNutrient kind="sugars" value={diary.totals.sugars} />
+					{/if}
 				{/if}
 			{/each}
 		</div>
@@ -253,8 +257,6 @@
 						<small class="block text-xs text-muted-foreground">
 							{fmt(group.totals.kcal)} kcal · G {fmt(group.totals.fat)} · C {fmt(group.totals.carbs)} · F {fmt(group.totals.fiber)} · P {fmt(group.totals.protein)}
 						</small>
-						<SubNutrient kind="saturatedFat" value={group.totals.saturatedFat} limit={getSaturatedFatLimit()} />
-						<SubNutrient kind="sugars" value={group.totals.sugars} />
 					{:else}
 						<small class="block text-xs text-muted-foreground">Sin registros</small>
 					{/if}
@@ -303,8 +305,6 @@
 											<small class="truncate text-xs text-muted-foreground">
 												{fmt(entry.kcal)} kcal · G {fmt(entry.fat)} · C {fmt(entry.carbs)} · F {fmt(entry.fiber)} · P {fmt(entry.protein)}
 											</small>
-											<SubNutrient kind="saturatedFat" value={entry.saturatedFat ?? null} limit={getSaturatedFatLimit()} />
-											<SubNutrient kind="sugars" value={entry.sugars ?? null} />
 										</div>
 										<DropdownMenu.Root>
 											<DropdownMenu.Trigger>

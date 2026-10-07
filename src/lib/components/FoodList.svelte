@@ -286,8 +286,12 @@
 								{#if food.barcode}<span>{food.barcode} · </span>{/if}
 								{fmt(food.kcal)} kcal · G {fmt(food.fat)} · C {fmt(food.carbs)} · F {fmt(food.fiber)} · P {fmt(food.protein)} / {food.base}g{#if food.unitSize} · 1 ud = {fmt(food.unitSize)} g{/if}{#if food.source !== 'builtin'} · {food.source}{/if}
 							</small>
-							<small class="pl-2 text-xs text-muted-foreground">Grasas saturadas: {food.saturatedFat === undefined ? 'Sin datos completos' : `${fmt(food.saturatedFat)} g`} / {food.base}g</small>
-							<small class="pl-2 text-xs text-muted-foreground">Azúcares totales: {food.sugars === undefined ? 'Sin datos completos' : `${fmt(food.sugars)} g`} / {food.base}g</small>
+							{#if food.saturatedFat !== undefined}
+								<small class="pl-2 text-xs text-muted-foreground">Grasas saturadas: {fmt(food.saturatedFat)} g / {food.base}g</small>
+							{/if}
+							{#if food.sugars !== undefined}
+								<small class="pl-2 text-xs text-muted-foreground">Azúcares totales: {fmt(food.sugars)} g / {food.base}g</small>
+							{/if}
 							<small class="text-xs text-muted-foreground">{usedIn(food)}</small>
 						</div>
 						<div class="flex shrink-0 gap-1.5">

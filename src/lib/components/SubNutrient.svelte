@@ -3,29 +3,25 @@
 	import { Progress } from '$lib/components/ui/progress';
 	import { cn } from '$lib/utils';
 
-	type Props = { kind: 'saturatedFat'; value: number | null; limit: number }
-		| { kind: 'sugars'; value: number | null };
+	type Props = { kind: 'saturatedFat'; value: number; limit: number }
+		| { kind: 'sugars'; value: number };
 
 	let props: Props = $props();
-	const excessive = $derived(props.kind === 'saturatedFat' && props.value !== null && props.value > props.limit);
-	const percentage = $derived(props.kind === 'saturatedFat' && props.value !== null && props.limit > 0
+	const excessive = $derived(props.kind === 'saturatedFat' && props.value > props.limit);
+	const percentage = $derived(props.kind === 'saturatedFat' && props.limit > 0
 		? Math.min(100, props.value / props.limit * 100) : 0);
 </script>
 
 <div class="ml-3 border-l border-border pl-2 text-xs text-muted-foreground">
 	<p class:text-destructive={excessive}>
 		{props.kind === 'saturatedFat' ? 'Grasas saturadas' : 'Azúcares totales'}:
-		{#if props.value === null}
-			Sin datos completos
-		{:else}
-			{fmt(props.value, 1)} g
-		{/if}
+		{fmt(props.value, 1)} g
 		{#if props.kind === 'saturatedFat'}
 			· Máximo {fmt(props.limit, 1)} g
 			{#if excessive} · Máximo superado{/if}
 		{/if}
 	</p>
-	{#if props.kind === 'saturatedFat' && props.value !== null}
+	{#if props.kind === 'saturatedFat'}
 		<Progress
 			value={percentage}
 			aria-label="Grasas saturadas respecto al máximo"
