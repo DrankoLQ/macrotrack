@@ -214,6 +214,7 @@ test('el máximo usa kcal antiguas o recalculadas y compara cantidades sin redon
 		height: 165, weight: 60, age: 40, sex: 'female', activity: 'sedentary', goal: 'maintain'
 	}), {
 		tmb: 1340.8999999999999, tdee: 1609.0799999999997, activityFactor: 1.2, adjustment: 0,
+		base: { kcal: 1609, protein: 126, carbs: 155, fat: 54, fiber: 30 },
 		totals: { kcal: 1609, protein: 126, carbs: 155, fat: 54, fiber: 30 }
 	});
 });
