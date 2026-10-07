@@ -38,3 +38,15 @@ test('computeGoals carbs nunca negativo', () => {
 	const g = computeGoals({ height: 150, weight: 250, age: 90, sex: 'female', activity: 'sedentary', goal: 'lose' });
 	assert.ok(g.carbs >= 0);
 });
+
+test('recortes de macros: bajan gramos y kcal, nunca suben', () => {
+	const base = { height: 175, weight: 70, age: 30, sex: 'male', activity: 'moderate', goal: 'lose' } as const;
+	const plain = computeGoals(base);
+	const cut = computeGoals({ ...base, cuts: { carbs: 20, fat: 10 } });
+	assert.equal(cut.carbs, Math.round(plain.carbs * 0.8));
+	assert.equal(cut.fat, Math.round(plain.fat * 0.9));
+	assert.equal(cut.protein, plain.protein);
+	assert.equal(plain.kcal - cut.kcal, (plain.carbs - cut.carbs) * 4 + (plain.fat - cut.fat) * 9);
+	assert.deepEqual(computeGoals({ ...base, cuts: { carbs: -50 } }), plain, 'recorte negativo no sube');
+	assert.deepEqual(computeGoals({ ...base, goal: 'maintain', cuts: { carbs: 20 } }), computeGoals({ ...base, goal: 'maintain' }), 'sin déficit no aplica');
+});
