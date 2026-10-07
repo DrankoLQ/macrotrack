@@ -1,4 +1,5 @@
-import { MACROS, sumTotals, type Totals } from './macros.ts';
+import { MACROS, sumConsumption, saturatedFatLimit, type Totals, type NutrientValues,
+	type ConsumptionTotals, type SubNutrientKey } from './macros.ts';
 
 export function shiftDate(date: string, days: number): string {
 	const value = new Date(date + 'T12:00:00');
@@ -13,17 +14,17 @@ export function weekDates(date: string): string[] {
 }
 
 export type TrackingStatus = 'complete' | 'partial' | 'empty' | 'future';
-export type TrackedDay = { date: string; status: TrackingStatus; totals: Totals | null };
+export type TrackedDay = { date: string; status: TrackingStatus; totals: ConsumptionTotals | null };
 
 export function summarizeDays(
-	entries: (Totals & { date: string })[],
+	entries: (NutrientValues & { date: string })[],
 	completeDates: string[],
 	dates: string[],
 	today: string,
 	goals: Totals
 ) {
 	const confirmed = new Set(completeDates);
-	const grouped = new Map<string, (Totals & { date: string })[]>();
+	const grouped = new Map<string, (NutrientValues & { date: string })[]>();
 	for (const entry of entries) {
 		const group = grouped.get(entry.date) ?? [];
 		group.push(entry);
@@ -33,8 +34,7 @@ export function summarizeDays(
 		if (date > today) return { date, status: 'future', totals: null };
 		const entries = grouped.get(date);
 		if (!entries?.length) return { date, status: 'empty', totals: null };
-		const totals: Totals = { kcal: 0, fat: 0, carbs: 0, fiber: 0, protein: 0 };
-		for (const { key } of MACROS) totals[key] = sumTotals(entries, key);
+		const totals = sumConsumption(entries);
 		return { date, status: confirmed.has(date) ? 'complete' : 'partial', totals };
 	});
 	const complete = days.filter((day) => day.status === 'complete');
@@ -51,5 +51,24 @@ export function summarizeDays(
 			compliance: complete.length ? Math.round(values.filter((value) => meetsGoal(value, goal)).length / complete.length * 100) : null
 		};
 	});
-	return { days, completeCount: complete.length, metrics };
+	const knownValues = (key: SubNutrientKey) =>
+		complete.map((day) => day.totals![key]).filter((value) => value !== null);
+	const summarizeValues = (values: number[]) => ({
+		average: values.length ? values.reduce((sum, value) => sum + value, 0) / values.length : null,
+		eligibleCount: values.length,
+		completeCount: complete.length
+	});
+	const saturatedValues = knownValues('saturatedFat');
+	const saturatedFat = summarizeValues(saturatedValues);
+	const sugars = summarizeValues(knownValues('sugars'));
+	const limit = saturatedFatLimit(goals.kcal);
+	const withinLimitCount = saturatedValues.filter((value) => value <= limit).length;
+	const subMetrics = {
+		saturatedFat: {
+			...saturatedFat, limit, withinLimitCount,
+			compliance: saturatedFat.eligibleCount ? Math.round(withinLimitCount / saturatedFat.eligibleCount * 100) : null
+		},
+		sugars
+	};
+	return { days, completeCount: complete.length, metrics, subMetrics };
 }
