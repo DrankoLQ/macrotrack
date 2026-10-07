@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { MEAL_TYPES, type Food, type MealType, type Recipe, type RecipeItem } from '$lib/db';
 	import { fmt, toNumber } from '$lib/format';
+	import { parseOptionalNutrient } from '$lib/nutrient-input';
 	import { MACROS } from '$lib/macros';
 	import { recipeGrams, recipeItem, recipeTotals } from '$lib/recipes';
 	import FoodPicker from './FoodPicker.svelte';
@@ -29,7 +30,7 @@
 	/** Receta al vuelo: las macros del plato entero, sin pesar ingredientes. */
 	let manual = $state(false);
 	let portion = $state('100');
-	let macros = $state({ kcal: '', fat: '', carbs: '', fiber: '', protein: '' });
+	let macros = $state({ kcal: '', fat: '', carbs: '', fiber: '', protein: '', saturatedFat: '', sugars: '' });
 
 	const num = (value: string) => toNumber(value) || 0;
 
@@ -60,6 +61,13 @@
 			error = 'Añade al menos un alimento';
 			return;
 		}
+		const saturatedFat = parseOptionalNutrient(manual ? macros.saturatedFat : '');
+		const sugars = parseOptionalNutrient(manual ? macros.sugars : '');
+		if (!saturatedFat.ok || !sugars.ok) {
+			error = 'Introduce cantidades finitas y no negativas, o deja el campo vacío';
+			return;
+		}
+		error = '';
 		const saved = manual
 			? [{
 					name: trimmed,
@@ -68,12 +76,28 @@
 					fat: num(macros.fat),
 					carbs: num(macros.carbs),
 					fiber: num(macros.fiber),
-					protein: num(macros.protein)
+					protein: num(macros.protein),
+					...(saturatedFat.value === undefined ? {} : { saturatedFat: saturatedFat.value }),
+					...(sugars.value === undefined ? {} : { sugars: sugars.value })
 				}]
 			: $state.snapshot(items);
 		onSave({ name: trimmed, mealTypes: $state.snapshot(mealTypes), items: saved });
 	}
 </script>
+
+{#snippet saturatedFatInput()}
+	<div class="mt-2 pl-2">
+		<Label class="mb-1 block text-xs text-muted-foreground">Grasas saturadas / ración (g)</Label>
+		<Input type="text" bind:value={macros.saturatedFat} inputmode="decimal" placeholder="Desconocido" />
+	</div>
+{/snippet}
+
+{#snippet sugarsInput()}
+	<div class="mt-2 pl-2">
+		<Label class="mb-1 block text-xs text-muted-foreground">Azúcares totales / ración (g)</Label>
+		<Input type="text" bind:value={macros.sugars} inputmode="decimal" placeholder="Desconocido" />
+	</div>
+{/snippet}
 
 <div class="flex flex-col gap-2.5">
 	{#if error}<p class="text-sm text-destructive">{error}</p>{/if}
@@ -116,6 +140,11 @@
 				<div>
 					<Label class="mb-1 block">{macro.label} ({macro.unit})</Label>
 					<Input type="text" bind:value={macros[macro.key]} inputmode="decimal" />
+					{#if macro.key === 'fat'}
+						{@render saturatedFatInput()}
+					{:else if macro.key === 'carbs'}
+						{@render sugarsInput()}
+					{/if}
 				</div>
 			{/each}
 		</div>
@@ -151,6 +180,8 @@
 				· {fmt(recipeGrams(items))} g · {fmt(totals.kcal, 0)} kcal · G {fmt(totals.fat)} · C {fmt(totals.carbs)} · F {fmt(totals.fiber)} · P {fmt(totals.protein)}
 			</span>
 		</p>
+		<p class="pl-2 text-xs text-muted-foreground">Grasas saturadas: {totals.saturatedFat === null ? 'Sin datos completos' : `${fmt(totals.saturatedFat)} g`} / ración</p>
+		<p class="pl-2 text-xs text-muted-foreground">Azúcares totales: {totals.sugars === null ? 'Sin datos completos' : `${fmt(totals.sugars)} g`} / ración</p>
 	{/if}
 	<Button onclick={submit}>{submitLabel}</Button>
 </div>
