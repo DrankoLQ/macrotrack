@@ -35,7 +35,11 @@ export interface Profile {
 	sex: Sex;
 	activity: ActivityLevel;
 	goal: Goal;
+	/** En déficit: % (0–100) que se recorta a cada macro respecto a la fórmula. Solo baja, nunca sube. */
+	cuts?: MacroCuts;
 }
+
+export type MacroCuts = Partial<Record<'fat' | 'carbs' | 'protein', number>>;
 
 export const ACTIVITY_FACTORS: Record<ActivityLevel, number> = {
 	sedentary: 1.2,
@@ -56,7 +60,19 @@ export interface GoalsBreakdown {
 	tdee: number;
 	activityFactor: number;
 	adjustment: number;
+	/** Objetivo de la fórmula, antes de los recortes personalizados. */
+	base: Totals;
 	totals: Totals;
+}
+
+/** Baja cada macro su % de recorte y resta sus kcal (4/9/4 kcal/g). Un recorte negativo cuenta como 0. */
+export function applyCuts(t: Totals, cuts: MacroCuts = {}): Totals {
+	const cut = (key: keyof MacroCuts) => Math.round(t[key] * (1 - Math.min(100, Math.max(0, cuts[key] ?? 0)) / 100));
+	const fat = cut('fat');
+	const carbs = cut('carbs');
+	const protein = cut('protein');
+	const kcal = t.kcal - (t.fat - fat) * 9 - (t.carbs - carbs) * 4 - (t.protein - protein) * 4;
+	return { ...t, kcal, fat, carbs, protein };
 }
 
 export function computeGoalsBreakdown(p: Profile): GoalsBreakdown {
@@ -70,12 +86,14 @@ export function computeGoalsBreakdown(p: Profile): GoalsBreakdown {
 	const protein = Math.round(p.weight * 2.1);
 	const fat = Math.round(p.weight * 0.9);
 	const carbs = Math.max(0, Math.round((kcal - protein * 4 - fat * 9) / 4));
+	const base = { kcal, protein, carbs, fat, fiber: 30 };
 	return {
 		tmb,
 		tdee: tmb * activityFactor,
 		activityFactor,
 		adjustment,
-		totals: { kcal, protein, carbs, fat, fiber: 30 }
+		base,
+		totals: adjustment < 0 ? applyCuts(base, p.cuts) : base
 	};
 }
 

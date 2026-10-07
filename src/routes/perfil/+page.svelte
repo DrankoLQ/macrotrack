@@ -7,6 +7,7 @@
 		weights,
 		saveGoals,
 		saveProfile,
+		GOAL_ADJUSTMENTS,
 		type ActivityLevel,
 		type Goal,
 		type Sex
@@ -63,8 +64,11 @@
 		age: '',
 		sex: 'male' as Sex,
 		activity: 'moderate' as ActivityLevel,
-		goal: 'recomp' as Goal
+		goal: 'recomp' as Goal,
+		cuts: { fat: 0, carbs: 0, protein: 0 }
 	});
+
+	const CUT_MACROS = MACROS.filter((macro) => macro.key === 'fat' || macro.key === 'carbs' || macro.key === 'protein');
 
 	$effect(() => {
 		const p = profile.value;
@@ -75,7 +79,8 @@
 				age: String(p.age),
 				sex: p.sex,
 				activity: p.activity,
-				goal: p.goal
+				goal: p.goal,
+				cuts: { fat: 0, carbs: 0, protein: 0, ...p.cuts }
 			});
 		}
 	});
@@ -89,7 +94,7 @@
 		const weight = effectiveWeight;
 		const age = toNumber(pform.age);
 		if (!height || !weight || !age) return null;
-		return computeGoalsBreakdown({ height, weight, age, sex: pform.sex, activity: pform.activity, goal: pform.goal });
+		return computeGoalsBreakdown({ height, weight, age, sex: pform.sex, activity: pform.activity, goal: pform.goal, cuts: pform.cuts });
 	});
 
 	const profileTotals = $derived(profileBreakdown?.totals ?? null);
@@ -104,7 +109,8 @@
 			age: toNumber(pform.age),
 			sex: pform.sex,
 			activity: pform.activity,
-			goal: pform.goal
+			goal: pform.goal,
+			cuts: $state.snapshot(pform.cuts)
 		});
 	});
 
@@ -447,17 +453,22 @@
 						TMB (Harris-Benedict): {fmt(profileBreakdown.tmb)} kcal × {fmt(profileBreakdown.activityFactor, 3)} (actividad) = <span class="font-semibold text-foreground">{fmt(profileBreakdown.tdee)} kcal/día</span>
 					</p>
 					<p>
-						Ajuste objetivo ({GOAL_SHORT[pform.goal]}): {profileBreakdown.adjustment > 0 ? '+' : ''}{fmt(profileBreakdown.adjustment)} kcal → <span class="font-semibold text-foreground">{fmt(profileBreakdown.totals.kcal)} kcal</span>
+						Ajuste objetivo ({GOAL_SHORT[pform.goal]}): {profileBreakdown.adjustment > 0 ? '+' : ''}{fmt(profileBreakdown.adjustment)} kcal → <span class="font-semibold text-foreground">{fmt(profileBreakdown.base.kcal)} kcal</span>
 					</p>
 					<p>
-						Proteína: {fmt(effectiveWeight)} kg × 2.1 = <span class="font-semibold text-foreground">{fmt(profileBreakdown.totals.protein)} g</span>
+						Proteína: {fmt(effectiveWeight)} kg × 2.1 = <span class="font-semibold text-foreground">{fmt(profileBreakdown.base.protein)} g</span>
 					</p>
 					<p>
-						Grasa: {fmt(effectiveWeight)} kg × 0.9 = <span class="font-semibold text-foreground">{fmt(profileBreakdown.totals.fat)} g</span>
+						Grasa: {fmt(effectiveWeight)} kg × 0.9 = <span class="font-semibold text-foreground">{fmt(profileBreakdown.base.fat)} g</span>
 					</p>
 					<p>
-						Carbohidratos: ({fmt(profileBreakdown.totals.kcal)} − {fmt(profileBreakdown.totals.protein * 4)} − {fmt(profileBreakdown.totals.fat * 9)}) ÷ 4 = <span class="font-semibold text-foreground">{fmt(profileBreakdown.totals.carbs)} g</span>
+						Carbohidratos: ({fmt(profileBreakdown.base.kcal)} − {fmt(profileBreakdown.base.protein * 4)} − {fmt(profileBreakdown.base.fat * 9)}) ÷ 4 = <span class="font-semibold text-foreground">{fmt(profileBreakdown.base.carbs)} g</span>
 					</p>
+					{#if profileBreakdown.base.kcal !== profileBreakdown.totals.kcal}
+						<p>
+							Recorte personalizado: {fmt(profileBreakdown.base.kcal - profileBreakdown.totals.kcal)} kcal menos → <span class="font-semibold text-foreground">{fmt(profileBreakdown.totals.kcal)} kcal</span>
+						</p>
+					{/if}
 				</div>
 			</details>
 		{:else}
@@ -533,6 +544,35 @@
 						</Select.Content>
 					</Select.Root>
 				</div>
+				{#if GOAL_ADJUSTMENTS[pform.goal] < 0 && profileBreakdown}
+					<div class="flex flex-col gap-3 pt-1">
+						<div>
+							<Label class="block">Ajustar déficit</Label>
+							<p class="text-xs text-muted-foreground">Baja alguna macro por debajo de la fórmula. Nunca sube de lo calculado.</p>
+						</div>
+						{#each CUT_MACROS as macro}
+							<div>
+								<div class="mb-1 flex items-baseline justify-between text-sm">
+									<label for={`cut-${macro.key}`}>{macro.label}</label>
+									<span class="tabular-nums">
+										<span class="font-semibold">{fmt(profileBreakdown.totals[macro.key])} {macro.unit}</span>
+										<span class="text-muted-foreground">/ {fmt(profileBreakdown.base[macro.key])}{pform.cuts[macro.key] > 0 ? ` · −${pform.cuts[macro.key]}%` : ''}</span>
+									</span>
+								</div>
+								<input
+									id={`cut-${macro.key}`}
+									type="range"
+									min="0"
+									max="50"
+									step="5"
+									class="h-8 w-full accent-primary"
+									style="direction: rtl"
+									bind:value={pform.cuts[macro.key]}
+								/>
+							</div>
+						{/each}
+					</div>
+				{/if}
 			</div>
 		</details>
 	</CardContent>
