@@ -86,14 +86,14 @@
 </script>
 
 {#snippet saturatedFatInput()}
-	<div class="mt-2 pl-2">
+	<div class="mt-2">
 		<Label class="mb-1 block text-xs text-muted-foreground">Grasas saturadas / ración (g)</Label>
 		<Input type="text" bind:value={macros.saturatedFat} inputmode="decimal" placeholder="Desconocido" />
 	</div>
 {/snippet}
 
 {#snippet sugarsInput()}
-	<div class="mt-2 pl-2">
+	<div class="mt-2">
 		<Label class="mb-1 block text-xs text-muted-foreground">Azúcares totales / ración (g)</Label>
 		<Input type="text" bind:value={macros.sugars} inputmode="decimal" placeholder="Desconocido" />
 	</div>
