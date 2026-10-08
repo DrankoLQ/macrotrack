@@ -237,7 +237,7 @@
 					<div>
 						<Label class="mb-1 block">Grasas / 100g</Label>
 						<Input type="text" bind:value={form.fat} inputmode="decimal" />
-						<div class="mt-2 pl-2">
+						<div class="mt-2">
 							<Label class="mb-1 block text-xs text-muted-foreground">Grasas saturadas / 100g</Label>
 							<Input type="text" bind:value={form.saturatedFat} inputmode="decimal" placeholder="Desconocido" />
 						</div>
@@ -245,7 +245,7 @@
 					<div>
 						<Label class="mb-1 block">Hidratos / 100g</Label>
 						<Input type="text" bind:value={form.carbs} inputmode="decimal" />
-						<div class="mt-2 pl-2">
+						<div class="mt-2">
 							<Label class="mb-1 block text-xs text-muted-foreground">Azúcares totales / 100g</Label>
 							<Input type="text" bind:value={form.sugars} inputmode="decimal" placeholder="Desconocido" />
 						</div>
