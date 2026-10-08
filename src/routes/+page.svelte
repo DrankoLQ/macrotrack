@@ -41,7 +41,8 @@
 			return {
 				...type,
 				entries,
-				totals: sumConsumption(entries)
+				totals: sumConsumption(entries),
+				sub: subLine(entries)
 			};
 		})
 	);
@@ -52,6 +53,15 @@
 	const kcalRemaining = $derived(goals.kcal - diary.totals.kcal);
 	const kcalOver = $derived(kcalRemaining < 0);
 	const kcalPct = $derived(goals.kcal > 0 ? Math.min(100, (diary.totals.kcal / goals.kcal) * 100) : 0);
+
+	/** Sub-nutrientes conocidos; «≥» avisa de que algún registro no tiene dato (desconocido no es cero). */
+	function subLine(entries: Entry[]): string {
+		const part = (label: string, key: 'saturatedFat' | 'sugars') => {
+			const t = sumSubNutrient(entries, key);
+			return t.value === null ? '' : `${t.known < t.total ? '≥ ' : ''}${label} ${fmt(t.value)}`;
+		};
+		return [part('Sat', 'saturatedFat'), part('Azúc', 'sugars')].filter(Boolean).join(' · ');
+	}
 
 	let editingId = $state<number | null>(null);
 	let editGrams = $state('100');
@@ -267,7 +277,7 @@
 					</div>
 					{#if group.entries.length > 0}
 						<small class="block text-xs text-muted-foreground">
-							{fmt(group.totals.kcal)} kcal · G {fmt(group.totals.fat)} · C {fmt(group.totals.carbs)} · F {fmt(group.totals.fiber)} · P {fmt(group.totals.protein)}
+							{fmt(group.totals.kcal)} kcal · G {fmt(group.totals.fat)} · C {fmt(group.totals.carbs)} · F {fmt(group.totals.fiber)} · P {fmt(group.totals.protein)}{group.sub ? ` · ${group.sub}` : ''}
 						</small>
 					{:else}
 						<small class="block text-xs text-muted-foreground">Sin registros</small>
@@ -276,6 +286,7 @@
 				{#if group.entries.length > 0}
 					<ul>
 						{#each group.entries as entry (entry.id)}
+							{@const sub = subLine([entry])}
 							<li class="border-b border-border py-2.5 last:border-b-0">
 								{#if editingId === entry.id}
 									<div class="flex w-full flex-wrap items-end gap-2">
@@ -317,6 +328,9 @@
 											<small class="truncate text-xs text-muted-foreground">
 												{fmt(entry.kcal)} kcal · G {fmt(entry.fat)} · C {fmt(entry.carbs)} · F {fmt(entry.fiber)} · P {fmt(entry.protein)}
 											</small>
+											{#if sub}
+												<small class="ml-3 border-l border-border pl-2 text-xs text-muted-foreground">{sub}</small>
+											{/if}
 										</div>
 										<DropdownMenu.Root>
 											<DropdownMenu.Trigger>
