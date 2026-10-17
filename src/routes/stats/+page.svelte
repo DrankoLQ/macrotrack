@@ -232,8 +232,8 @@
 					goalLabel={chartMacro.key === 'saturatedFat' ? 'Máximo' : 'Objetivo'}
 				/>
 			{/if}
-			{#if chartSummary.subMetrics.saturatedFat.eligibleCount > 0 || chartSummary.subMetrics.sugars.eligibleCount > 0}
-				<h3 class="text-sm font-semibold">Medias y cobertura · {range === 'week' ? 'semana seleccionada' : 'últimos 30 días'}</h3>
+			{#if range === 30 && (chartSummary.subMetrics.saturatedFat.eligibleCount > 0 || chartSummary.subMetrics.sugars.eligibleCount > 0)}
+				<h3 class="text-sm font-semibold">Medias y cobertura · últimos 30 días</h3>
 				{#if chartSummary.subMetrics.saturatedFat.eligibleCount > 0}
 					<div>
 						<p class="mb-1 text-xs text-muted-foreground">Desglose de grasas</p>
