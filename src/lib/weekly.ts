@@ -1,5 +1,5 @@
-import { MACROS, sumConsumption, saturatedFatLimit, type Totals, type NutrientValues,
-	type ConsumptionTotals, type SubNutrientKey } from './macros.ts';
+import { MACROS, sumConsumption, sumSubNutrient, saturatedFatLimit, type Totals, type NutrientValues,
+	type ConsumptionTotals, type SubNutrientKey, type SubNutrientTotals } from './macros.ts';
 
 export function shiftDate(date: string, days: number): string {
 	const value = new Date(date + 'T12:00:00');
@@ -51,22 +51,27 @@ export function summarizeDays(
 			compliance: complete.length ? Math.round(values.filter((value) => meetsGoal(value, goal)).length / complete.length * 100) : null
 		};
 	});
-	const knownValues = (key: SubNutrientKey) =>
-		complete.map((day) => day.totals![key]).filter((value) => value !== null);
-	const summarizeValues = (values: number[]) => ({
-		average: values.length ? values.reduce((sum, value) => sum + value, 0) / values.length : null,
+	// Saturadas y azúcares promedian los días completos con algún dato; si al día le falta algún
+	// registro, su suma es un mínimo (≥) y se expone junto a su cobertura de registros.
+	const subNutrientValues = (key: SubNutrientKey) =>
+		complete.map((day) => sumSubNutrient(grouped.get(day.date)!, key)).filter((summary) => summary.value !== null);
+	const summarizeValues = (values: SubNutrientTotals[]) => ({
+		average: values.length ? values.reduce((sum, summary) => sum + summary.value!, 0) / values.length : null,
 		eligibleCount: values.length,
-		completeCount: complete.length
+		completeCount: complete.length,
+		known: values.reduce((sum, summary) => sum + summary.known, 0),
+		total: values.reduce((sum, summary) => sum + summary.total, 0)
 	});
-	const saturatedValues = knownValues('saturatedFat');
-	const saturatedFat = summarizeValues(saturatedValues);
-	const sugars = summarizeValues(knownValues('sugars'));
+	const saturatedFat = summarizeValues(subNutrientValues('saturatedFat'));
+	const sugars = summarizeValues(subNutrientValues('sugars'));
 	const limit = saturatedFatLimit(goals.kcal);
-	const withinLimitCount = saturatedValues.filter((value) => value <= limit).length;
+	// El máximo solo se evalúa con días de dato completo: una suma parcial no permite asegurarlo.
+	const fullSaturatedFat = complete.map((day) => day.totals!.saturatedFat).filter((value) => value !== null);
+	const withinLimitCount = fullSaturatedFat.filter((value) => value <= limit).length;
 	const subMetrics = {
 		saturatedFat: {
-			...saturatedFat, limit, withinLimitCount,
-			compliance: saturatedFat.eligibleCount ? Math.round(withinLimitCount / saturatedFat.eligibleCount * 100) : null
+			...saturatedFat, limit, fullCount: fullSaturatedFat.length, withinLimitCount,
+			compliance: fullSaturatedFat.length ? Math.round(withinLimitCount / fullSaturatedFat.length * 100) : null
 		},
 		sugars
 	};

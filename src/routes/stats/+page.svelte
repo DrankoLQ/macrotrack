@@ -112,12 +112,17 @@
 			<p class="mb-1 text-xs text-muted-foreground">Media diaria · cobertura {metric.eligibleCount}/{metric.completeCount} días completos con datos</p>
 			{#if kind === 'saturatedFat'}
 				{@const saturated = period.subMetrics.saturatedFat}
-				<SubNutrient kind="saturatedFat" value={metric.average!} limit={getSaturatedFatLimit()} />
+				<SubNutrient kind="saturatedFat" value={saturated.average!} limit={getSaturatedFatLimit()} known={saturated.known} total={saturated.total} />
 				<p class="mt-1 text-xs text-muted-foreground">
-					Cumplimiento del máximo: {fmt(saturated.compliance!)} % · {saturated.withinLimitCount}/{saturated.eligibleCount} días evaluables
+					{#if saturated.compliance === null}
+						Cumplimiento del máximo: sin días con dato completo
+					{:else}
+						Cumplimiento del máximo: {fmt(saturated.compliance!)} % · {saturated.withinLimitCount}/{saturated.fullCount} días con dato completo
+					{/if}
 				</p>
 			{:else}
-				<SubNutrient kind="sugars" value={metric.average!} />
+				{@const sugars = period.subMetrics.sugars}
+				<SubNutrient kind="sugars" value={sugars.average!} known={sugars.known} total={sugars.total} />
 			{/if}
 		</div>
 	{/if}

@@ -77,9 +77,9 @@ test('cada nutriente tiene su denominador y conserva las cinco métricas origina
 	];
 	const result = summarizeDays(entries, dates.slice(0, 3), dates, dates[3], goals);
 	assert.deepEqual(result.subMetrics, {
-		saturatedFat: { average: 15, eligibleCount: 2, completeCount: 3,
-			limit: goals.kcal * 0.10 / 9, compliance: 100, withinLimitCount: 2 },
-		sugars: { average: 5, eligibleCount: 1, completeCount: 3 }
+		saturatedFat: { average: 15, eligibleCount: 2, completeCount: 3, known: 2, total: 2,
+			limit: goals.kcal * 0.10 / 9, fullCount: 2, compliance: 100, withinLimitCount: 2 },
+		sugars: { average: 5, eligibleCount: 1, completeCount: 3, known: 1, total: 1 }
 	});
 	assert.equal(result.days[3].totals, null);
 	assert.equal(result.days[4].totals, null);
@@ -90,7 +90,7 @@ test('cada nutriente tiene su denominador y conserva las cinco métricas origina
 	assert.equal(result.completeCount, old.completeCount);
 });
 
-test('una entrada desconocida entre varias solo invalida su nutriente y permite completitud inversa', () => {
+test('los subnutrientes promedian los días completos con algún dato y exponen su cobertura', () => {
 	const entries = [
 		{ ...entry(dates[0], 100), saturatedFat: 1, sugars: 2 },
 		{ ...entry(dates[0], 200), sugars: 3 },
@@ -103,12 +103,41 @@ test('una entrada desconocida entre varias solo invalida su nutriente y permite 
 	assert.equal(result.days[0].totals?.sugars, 10);
 	assert.equal(result.days[1].totals?.saturatedFat, 6);
 	assert.equal(result.days[1].totals?.sugars, null);
-	assert.equal(result.subMetrics.saturatedFat.average, 6);
+	assert.equal(result.subMetrics.saturatedFat.average, 5.5);
 	assert.equal(result.subMetrics.sugars.average, 10);
-	assert.equal(result.subMetrics.saturatedFat.eligibleCount, 1);
+	assert.equal(result.subMetrics.saturatedFat.eligibleCount, 2);
 	assert.equal(result.subMetrics.sugars.eligibleCount, 1);
+	assert.equal(result.subMetrics.saturatedFat.known, 3);
+	assert.equal(result.subMetrics.saturatedFat.total, 4);
+	assert.equal(result.subMetrics.sugars.known, 3);
+	assert.equal(result.subMetrics.sugars.total, 3);
 	assert.equal(result.subMetrics.saturatedFat.completeCount, 2);
 	assert.equal(result.subMetrics.sugars.completeCount, 2);
+});
+
+test('el máximo de saturadas solo evalúa los días con dato completo, no los mínimos parciales', () => {
+	const limit = goals.kcal * 0.10 / 9;
+	const entries = [
+		{ ...entry(dates[0], 100), saturatedFat: limit - 1 },
+		{ ...entry(dates[0], 100) },
+		{ ...entry(dates[1], 100), saturatedFat: limit + 1 }
+	];
+	const result = summarizeDays(entries, dates.slice(0, 2), dates, dates[2], goals);
+	assert.equal(result.subMetrics.saturatedFat.average, limit);
+	assert.equal(result.subMetrics.saturatedFat.eligibleCount, 2);
+	assert.equal(result.subMetrics.saturatedFat.known, 2);
+	assert.equal(result.subMetrics.saturatedFat.total, 3);
+	assert.equal(result.subMetrics.saturatedFat.fullCount, 1);
+	assert.equal(result.subMetrics.saturatedFat.withinLimitCount, 0);
+	assert.equal(result.subMetrics.saturatedFat.compliance, 0);
+
+	const partial = summarizeDays(
+		[{ ...entry(dates[0], 100), saturatedFat: 5 }, { ...entry(dates[0], 100) }],
+		[dates[0]], dates, dates[1], goals
+	);
+	assert.equal(partial.subMetrics.saturatedFat.average, 5);
+	assert.equal(partial.subMetrics.saturatedFat.fullCount, 0);
+	assert.equal(partial.subMetrics.saturatedFat.compliance, null);
 });
 
 test('parciales conocidos conservan datos para el gráfico pero no medias; futuros y vacíos no cuentan', () => {
@@ -126,9 +155,9 @@ test('parciales conocidos conservan datos para el gráfico pero no medias; futur
 	assert.equal(result.days[6].totals, null);
 	assert.equal(result.completeCount, 1);
 	assert.deepEqual(result.subMetrics, {
-		saturatedFat: { average: 0, eligibleCount: 1, completeCount: 1,
-			limit: goals.kcal * 0.10 / 9, compliance: 100, withinLimitCount: 1 },
-		sugars: { average: 0, eligibleCount: 1, completeCount: 1 }
+		saturatedFat: { average: 0, eligibleCount: 1, completeCount: 1, known: 1, total: 1,
+			limit: goals.kcal * 0.10 / 9, fullCount: 1, compliance: 100, withinLimitCount: 1 },
+		sugars: { average: 0, eligibleCount: 1, completeCount: 1, known: 1, total: 1 }
 	});
 });
 
@@ -141,9 +170,9 @@ test('sin elegibles la media y cumplimiento son nulos, no ceros ni objetivos de 
 	for (const { entries, confirmed, count } of cases) {
 		const result = summarizeDays(entries, confirmed, dates, dates[6], goals);
 		assert.deepEqual(result.subMetrics, {
-			saturatedFat: { average: null, eligibleCount: 0, completeCount: count,
-				limit: goals.kcal * 0.10 / 9, compliance: null, withinLimitCount: 0 },
-			sugars: { average: null, eligibleCount: 0, completeCount: count }
+			saturatedFat: { average: null, eligibleCount: 0, completeCount: count, known: 0, total: 0,
+				limit: goals.kcal * 0.10 / 9, fullCount: 0, compliance: null, withinLimitCount: 0 },
+			sugars: { average: null, eligibleCount: 0, completeCount: count, known: 0, total: 0 }
 		});
 	}
 });
